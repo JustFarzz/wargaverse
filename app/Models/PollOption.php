@@ -12,16 +12,30 @@ class PollOption extends Model
     protected $fillable = [
         'poll_id',
         'option_text',
-        'order'
+        'order',
     ];
 
     public function poll()
     {
-        return $this->belongsTo(Poll::class);
+        return $this->belongsTo(Poll::class, 'poll_id');
     }
 
     public function votes()
     {
-        return $this->hasMany(PollVote::class, 'option_id');
+        return $this->hasMany(Vote::class, 'poll_option_id');
+    }
+
+    public function getVoteCountAttribute()
+    {
+        return $this->votes()->count();
+    }
+
+    public function getVotePercentageAttribute()
+    {
+        $totalVotes = $this->poll->votes()->count();
+        if ($totalVotes === 0) {
+            return 0;
+        }
+        return round(($this->votes()->count() / $totalVotes) * 100, 1);
     }
 }

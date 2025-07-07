@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,12 +12,12 @@ return new class extends Migration
     {
         Schema::create('poll_options', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('poll_id');
+            $table->foreignId('poll_id')->constrained('pollings')->onDelete('cascade');
             $table->string('option_text', 100);
-            $table->integer('order')->default(0);
+            $table->integer('order')->default(1);
             $table->timestamps();
 
-            $table->foreign('poll_id')->references('id')->on('polls')->onDelete('cascade');
+            $table->index(['poll_id', 'order']);
         });
     }
 

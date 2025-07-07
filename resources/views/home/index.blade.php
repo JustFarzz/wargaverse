@@ -46,7 +46,7 @@
             <div class="stat-card">
                 <div class="stat-icon">🗳️</div>
                 <div class="stat-content">
-                    <h3>{{ $activePolls ?? 0 }}</h3>
+                    <h3>{{ $activePollsCount ?? 0 }}</h3>
                     <p>Polling Aktif</p>
                 </div>
             </div>
@@ -70,10 +70,10 @@
                     </div>
                     <div class="card-content">
                         <div class="action-buttons">
-                            <a href="{{ route('timeline.create') }}" class="action-btn primary">
+                            {{-- <a href="{{ route('timeline.create') }}" class="action-btn primary">
                                 <span class="btn-icon">📝</span>
                                 Buat Postingan
-                            </a>
+                            </a> --}}
                             <a href="{{ route('laporan.create') }}" class="action-btn warning">
                                 <span class="btn-icon">📋</span>
                                 Buat Laporan
@@ -92,10 +92,10 @@
     
                 <!-- Recent Posts -->
                 <div class="card recent-posts">
-                    <div class="card-header">
+                    {{-- <div class="card-header">
                         <h2>Postingan Terbaru</h2>
                         <a href="{{ route('timeline.index') }}" class="view-all">Lihat Semua</a>
-                    </div>
+                    </div> --}}
                     <div class="card-content">
                         @if(isset($recentPosts) && $recentPosts->count() > 0)
                             @foreach($recentPosts as $post)
@@ -164,24 +164,30 @@
                     <div class="card-content">
                         @if(isset($activePolls) && $activePolls->count() > 0)
                             @foreach($activePolls as $poll)
-                            <div class="poll-item">
-                                <h4>{{ $poll->question }}</h4>
-                                <p class="poll-meta">
-                                    <span>{{ $poll->votes_count ?? 0 }} suara</span>
-                                    <span>•</span>
-                                    <span>Berakhir {{ $poll->end_date->diffForHumans() }}</span>
-                                </p>
-                                <a href="{{ route('polling.vote', $poll->id) }}" class="poll-vote-btn">Ikut Voting</a>
-                            </div>
+                                <div class="poll-item">
+                                    <h4>{{ $poll->title }}</h4>
+                                    <p class="poll-description">{{ Str::limit($poll->description, 80) }}</p>
+                                    <p class="poll-meta">
+                                        <span>{{ $poll->votes_count ?? 0 }} suara</span>
+                                        <span>•</span>
+                                        <span>Berakhir {{ \Carbon\Carbon::parse($poll->end_date)->diffForHumans() }}</span>
+                                    </p>
+                                    <div class="poll-actions">
+                                        <a href="{{ route('polling.show', $poll->id) }}" class="poll-vote-btn">Ikut Voting</a>
+                                        <span class="poll-category">{{ ucfirst($poll->category) }}</span>
+                                    </div>
+                                </div>
                             @endforeach
                         @else
                             <div class="empty-state">
-                                <p>Tidak ada polling aktif</p>
+                                <div class="empty-icon">🗳️</div>
+                                <p>Tidak ada polling aktif saat ini</p>
+                                <a href="{{ route('polling.create') }}" class="btn btn-primary btn-sm">Buat Polling Baru</a>
                             </div>
                         @endif
-                    </div>
+                    </div>          
                 </div>
-    
+                
                 <!-- Recent Reports Status -->
                 <div class="card recent-reports">
                     <div class="card-header">

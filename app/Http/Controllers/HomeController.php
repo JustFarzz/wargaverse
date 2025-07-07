@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Post;
 use App\Models\Report;
 use App\Models\Poll;
-use App\Models\Event;
+use App\Models\CalendarEvent;
 use App\Models\KasTransaction;
 use Carbon\Carbon;
 
@@ -30,7 +30,8 @@ class HomeController extends Controller
             ->where('rw', $user->rw)
             ->count();
 
-        $activePolls = Poll::where('status', 'active')
+        // Ubah nama variabel untuk menghindari konflik
+        $activePollsCount = Poll::where('status', 'active')
             ->where('rt', $user->rt)
             ->where('rw', $user->rw)
             ->where('end_date', '>', now())
@@ -66,14 +67,14 @@ class HomeController extends Controller
             ->get();
 
         // Kegiatan mendatang
-        $upcomingEvents = Event::where('rt', $user->rt)
+        $upcomingEvents = CalendarEvent::where('rt', $user->rt)
             ->where('rw', $user->rw)
             ->where('event_date', '>=', now())
             ->orderBy('event_date', 'asc')
             ->limit(5)
             ->get();
 
-        // Polling aktif
+        // Polling aktif - gunakan nama variabel yang berbeda
         $activePolls = Poll::withCount('votes')
             ->where('status', 'active')
             ->where('rt', $user->rt)
@@ -99,12 +100,13 @@ class HomeController extends Controller
         return view('home.index', compact(
             'totalPosts',
             'totalReports',
-            'activePolls',
+            'activePollsCount', // Ubah ini
             'kasBalance',
             'monthlyIncome',
             'monthlyExpense',
             'recentPosts',
             'upcomingEvents',
+            'activePolls', // Ini tetap untuk data polling
             'recentReports',
             'lastTransaction'
         ));
@@ -183,7 +185,7 @@ class HomeController extends Controller
             });
 
         // Upcoming events
-        $upcomingEvents = Event::where('rt', $user->rt)
+        $upcomingEvents = CalendarEvent::where('rt', $user->rt)
             ->where('rw', $user->rw)
             ->where('event_date', '>=', now())
             ->where('event_date', '<=', now()->addDays(3))

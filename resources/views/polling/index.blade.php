@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polling Warga - RT Digital</title>
+
     <link rel="stylesheet" href="{{ asset('css/createpolling.css') }}">
     <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/indexpolling.css') }}">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     @include('components.navbar')
 
@@ -47,208 +52,91 @@
 
         <!-- Polling List -->
         <div class="polling-list">
-            <!-- Active Poll -->
-            <div class="poll-card active-poll" data-status="active">
-                <div class="poll-header">
-                    <div class="poll-meta">
-                        <span class="poll-status status-active">
-                            <i class="fas fa-circle"></i> Aktif
-                        </span>
-                        <span class="poll-date">
-                            <i class="fas fa-calendar"></i> Berakhir: 15 Juli 2025
-                        </span>
-                    </div>
-                    <div class="poll-votes">
-                        <i class="fas fa-users"></i>
-                        <span class="vote-count">42</span> suara
-                    </div>
-                </div>
-                <div class="poll-content">
-                    <h3>Pemilihan Jadwal Kerja Bakti Bulanan</h3>
-                    <p class="poll-description">
-                        Mari tentukan jadwal kerja bakti yang paling cocok untuk semua warga RT 05. 
-                        Kegiatan ini penting untuk menjaga kebersihan dan keindahan lingkungan kita.
-                    </p>
-                    <div class="poll-creator">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="Admin">
-                        <div class="creator-info">
-                            <span class="creator-name">Pak RT</span>
-                            <span class="creator-role">Ketua RT</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="poll-actions">
-                    <a href="{{ route('polling.vote', 1) }}" class="btn btn-vote">
+            @forelse($pollings as $polling)
+                            @php
+                $isActive = $polling->end_date > now();
+                $totalVotes = $polling->votes()->count();
+                $totalUsers = \App\Models\User::count(); // Atau sesuaikan dengan jumlah warga RT
+                $participationRate = $totalUsers > 0 ? round(($totalVotes / $totalUsers) * 100) : 0;
+                            @endphp
+
+                            <div class="poll-card {{ $isActive ? 'active-poll' : 'ended-poll' }}"
+                                data-status="{{ $isActive ? 'active' : 'ended' }}">
+                                <div class="poll-header">
+                                    <div class="poll-meta">
+                                        <span class="poll-status {{ $isActive ? 'status-active' : 'status-ended' }}">
+                                            <i class="fas fa-{{ $isActive ? 'circle' : 'check-circle' }}"></i>
+                                            {{ $isActive ? 'Aktif' : 'Selesai' }}
+                                        </span>
+                                        <span class="poll-date">
+                                            <i class="fas fa-calendar"></i>
+                                            {{ $isActive ? 'Berakhir' : 'Berakhir' }}:
+                                            {{ \Carbon\Carbon::parse($polling->end_date)->format('d M Y') }}
+                                        </span>
+                                    </div>
+                                    <div class="poll-votes">
+                                        <i class="fas fa-users"></i>
+                                        <span class="vote-count">{{ $totalVotes }}</span> suara
+                                    </div>
+                                </div>
+                                <div class="poll-content">
+                                    <h3>{{ $polling->title }}</h3>
+                                    <p class="poll-description">
+                                        {{ Str::limit($polling->description, 150) }}
+                                    </p>
+                                    <div class="poll-creator">
+                                        <img src="{{ $polling->user->avatar ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face' }}"
+                                            alt="{{ $polling->user->name }}">
+                                        <div class="creator-info">
+                                            <span class="creator-name">{{ $polling->user->name }}</span>
+                                            <span
+                                                class="creator-role">{{ $polling->user->role == 'admin' ? 'Ketua RT' : 'Warga' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="poll-actions">
+                                    <a href="{{ route('polling.show', $polling->id) }}"
+                                        class="btn {{ $isActive ? 'btn-vote' : 'btn-result' }}">
+                                        <i class="fas fa-{{ $isActive ? 'vote-yea' : 'chart-bar' }}"></i>
+                                        {{ $isActive ? 'Lihat & Vote' : 'Lihat Hasil' }}
+                                    </a>
+                                    <div class="poll-stats">
+                                        <span class="participation {{ !$isActive ? 'completed' : '' }}">
+                                            <i class="fas fa-{{ !$isActive ? 'trophy' : 'chart-line' }}"></i>
+                                            {{ $participationRate }}% partisipasi
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+            @empty
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <div class="empty-icon">
                         <i class="fas fa-vote-yea"></i>
-                        Lihat & Vote
+                    </div>
+                    <h3>Belum Ada Polling</h3>
+                    <p>Saat ini tidak ada polling yang sedang berlangsung. Buat polling baru untuk melibatkan warga dalam
+                        pengambilan keputusan.</p>
+                    <a href="{{ route('polling.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Buat Polling Pertama
                     </a>
-                    <div class="poll-stats">
-                        <span class="participation">
-                            <i class="fas fa-chart-line"></i>
-                            78% partisipasi
-                        </span>
-                    </div>
                 </div>
-            </div>
-
-            <!-- Active Poll 2 -->
-            <div class="poll-card active-poll" data-status="active">
-                <div class="poll-header">
-                    <div class="poll-meta">
-                        <span class="poll-status status-active">
-                            <i class="fas fa-circle"></i> Aktif
-                        </span>
-                        <span class="poll-date">
-                            <i class="fas fa-calendar"></i> Berakhir: 18 Juli 2025
-                        </span>
-                    </div>
-                    <div class="poll-votes">
-                        <i class="fas fa-users"></i>
-                        <span class="vote-count">28</span> suara
-                    </div>
-                </div>
-                <div class="poll-content">
-                    <h3>Proposal Pembangunan Taman Bermain Anak</h3>
-                    <p class="poll-description">
-                        Usulan untuk membangun taman bermain di area kosong dekat musholla. 
-                        Apakah warga setuju dengan rencana ini dan bersedia berkontribusi?
-                    </p>
-                    <div class="poll-creator">
-                        <img src="https://images.unsplash.com/photo-1494790108755-2616b2e2e5cc?w=40&h=40&fit=crop&crop=face" alt="Bu Sari">
-                        <div class="creator-info">
-                            <span class="creator-name">Bu Sari</span>
-                            <span class="creator-role">Warga</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="poll-actions">
-                    <a href="{{ route('polling.vote', 2) }}" class="btn btn-vote">
-                        <i class="fas fa-vote-yea"></i>
-                        Lihat & Vote
-                    </a>
-                    <div class="poll-stats">
-                        <span class="participation">
-                            <i class="fas fa-chart-line"></i>
-                            52% partisipasi
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ended Poll -->
-            <div class="poll-card ended-poll" data-status="ended">
-                <div class="poll-header">
-                    <div class="poll-meta">
-                        <span class="poll-status status-ended">
-                            <i class="fas fa-check-circle"></i> Selesai
-                        </span>
-                        <span class="poll-date">
-                            <i class="fas fa-calendar"></i> Berakhir: 5 Juli 2025
-                        </span>
-                    </div>
-                    <div class="poll-votes">
-                        <i class="fas fa-users"></i>
-                        <span class="vote-count">67</span> suara
-                    </div>
-                </div>
-                <div class="poll-content">
-                    <h3>Pilihan Sistem Keamanan RT</h3>
-                    <p class="poll-description">
-                        Polling untuk menentukan sistem keamanan yang akan diterapkan di RT 05. 
-                        Hasil: CCTV + Satpam terpilih dengan 78% suara.
-                    </p>
-                    <div class="poll-creator">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="Admin">
-                        <div class="creator-info">
-                            <span class="creator-name">Pak RT</span>
-                            <span class="creator-role">Ketua RT</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="poll-actions">
-                    <a href="{{ route('polling.vote', 3) }}" class="btn btn-result">
-                        <i class="fas fa-chart-bar"></i>
-                        Lihat Hasil
-                    </a>
-                    <div class="poll-stats">
-                        <span class="participation completed">
-                            <i class="fas fa-trophy"></i>
-                            93% partisipasi
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Poll 3 -->
-            <div class="poll-card active-poll" data-status="active">
-                <div class="poll-header">
-                    <div class="poll-meta">
-                        <span class="poll-status status-active">
-                            <i class="fas fa-circle"></i> Aktif
-                        </span>
-                        <span class="poll-date">
-                            <i class="fas fa-calendar"></i> Berakhir: 25 Juli 2025
-                        </span>
-                    </div>
-                    <div class="poll-votes">
-                        <i class="fas fa-users"></i>
-                        <span class="vote-count">15</span> suara
-                    </div>
-                </div>
-                <div class="poll-content">
-                    <h3>Peningkatan Iuran Bulanan RT</h3>
-                    <p class="poll-description">
-                        Usulan peningkatan iuran bulanan dari Rp 15.000 menjadi Rp 20.000 untuk 
-                        memperbaiki fasilitas umum dan meningkatkan kegiatan sosial RT.
-                    </p>
-                    <div class="poll-creator">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Pak Budi">
-                        <div class="creator-info">
-                            <span class="creator-name">Pak Budi</span>
-                            <span class="creator-role">Bendahara RT</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="poll-actions">
-                    <a href="{{ route('polling.vote', 4) }}" class="btn btn-vote">
-                        <i class="fas fa-vote-yea"></i>
-                        Lihat & Vote
-                    </a>
-                    <div class="poll-stats">
-                        <span class="participation">
-                            <i class="fas fa-chart-line"></i>
-                            28% partisipasi
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Empty State (jika tidak ada polling) -->
-        <div class="empty-state" style="display: none;">
-            <div class="empty-icon">
-                <i class="fas fa-vote-yea"></i>
-            </div>
-            <h3>Belum Ada Polling</h3>
-            <p>Saat ini tidak ada polling yang sedang berlangsung. Buat polling baru untuk melibatkan warga dalam pengambilan keputusan.</p>
-            <a href="{{ route('polling.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i>
-                Buat Polling Pertama
-            </a>
+            @endforelse
         </div>
     </div>
 
     <script>
         // Filter functionality
         document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
+            tab.addEventListener('click', function () {
                 // Remove active class from all tabs
                 document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                
+
                 const filter = this.getAttribute('data-filter');
                 const polls = document.querySelectorAll('.poll-card');
-                
+
                 polls.forEach(poll => {
                     if (filter === 'all') {
                         poll.style.display = 'block';
@@ -261,14 +149,14 @@
         });
 
         // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function() {
+        document.getElementById('searchInput').addEventListener('input', function () {
             const searchTerm = this.value.toLowerCase();
             const polls = document.querySelectorAll('.poll-card');
-            
+
             polls.forEach(poll => {
                 const title = poll.querySelector('h3').textContent.toLowerCase();
                 const description = poll.querySelector('.poll-description').textContent.toLowerCase();
-                
+
                 if (title.includes(searchTerm) || description.includes(searchTerm)) {
                     poll.style.display = 'block';
                 } else {
@@ -283,7 +171,7 @@
             rootMargin: '0px 0px -50px 0px'
         };
 
-        const observer = new IntersectionObserver(function(entries) {
+        const observer = new IntersectionObserver(function (entries) {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.style.opacity = '1';
@@ -300,4 +188,5 @@
         });
     </script>
 </body>
+
 </html>

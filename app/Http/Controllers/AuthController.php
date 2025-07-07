@@ -16,7 +16,7 @@ class AuthController extends Controller
     /**
      * Show the login form.
      */
-    public function showLoginForm(): View
+    public function showLoginForm(): View|RedirectResponse
     {
         // Redirect jika sudah login
         if (Auth::check()) {
@@ -29,7 +29,7 @@ class AuthController extends Controller
     /**
      * Show the registration form.
      */
-    public function showRegisterForm(): View
+    public function showRegisterForm(): View|RedirectResponse
     {
         // Redirect jika sudah login
         if (Auth::check()) {

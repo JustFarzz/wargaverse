@@ -5,126 +5,101 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Poll;
 use App\Models\PollOption;
-use App\Models\PollVote;
-use App\Models\PollComment;
-use App\Models\PollCommentLike;
+use App\Models\Vote;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class PollController extends Controller
 {
     /**
-     * Display a listing of polls
+     * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $filter = $request->get('filter', 'all');
-        $search = $request->get('search');
+        $user = Auth::user();
 
-        $query = Poll::with(['creator', 'options'])
-            ->withCount(['votes', 'comments'])
-            ->orderBy('created_at', 'desc');
+        // Get all pollings with related data
+        $pollings = Poll::with(['options', 'votes', 'user'])
+            ->withCount(['votes as total_votes'])
+            ->where('rt', $user->rt)
+            ->where('rw', $user->rw)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        // Apply filters
-        switch ($filter) {
-            case 'active':
-                $query->where('end_date', '>', now())
-                    ->where('status', 'active');
-                break;
-            case 'ended':
-                $query->where('end_date', '<=', now())
-                    ->orWhere('status', 'closed');
-                break;
-            default:
-                // Show all polls
-                break;
-        }
+        // Add additional data to each polling
+        $pollings->each(function ($polling) {
+            // Calculate total participants
+            $polling->total_participants = $polling->votes->unique('user_id')->count();
 
-        // Apply search
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
+            // Check if current user has voted
+            $polling->user_has_voted = $polling->votes->where('user_id', Auth::id())->count() > 0;
 
-        $polls = $query->paginate(10);
+            // Determine status
+            $polling->status = $polling->end_date < now() ? 'ended' : 'active';
 
-        // Add additional data for each poll
-        $polls->getCollection()->transform(function ($poll) {
-            $poll->user_has_voted = $this->hasUserVoted($poll, Auth::id());
-            $poll->is_active = $this->isActive($poll);
-            $poll->has_ended = $this->hasEnded($poll);
-            $poll->participation_percentage = $this->getParticipationPercentage($poll);
-            $poll->total_votes = $poll->votes_count;
-            return $poll;
+            // Calculate participation percentage (assuming total users in RT)
+            $totalUsers = User::where('rt', $polling->rt)->where('rw', $polling->rw)->count();
+            $polling->participation_percentage = $totalUsers > 0 ?
+                round(($polling->total_participants / $totalUsers) * 100, 1) : 0;
         });
 
-        return view('polling.index', compact('polls', 'filter', 'search'));
+        return view('polling.index', compact('pollings'));
     }
 
     /**
-     * Show the form for creating a new poll
+     * Show the form for creating a new resource.
      */
     public function create()
     {
-        $categories = [
-            'umum' => 'Umum',
-            'keuangan' => 'Keuangan',
-            'keamanan' => 'Keamanan',
-            'kebersihan' => 'Kebersihan',
-            'sosial' => 'Sosial',
-            'pembangunan' => 'Pembangunan'
-        ];
-
-        return view('polling.create', compact('categories'));
+        return view('polling.create');
     }
 
     /**
-     * Store a newly created poll
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        // Sesuaikan dengan options di form create.blade.php
-        $categories = ['umum', 'keamanan', 'kebersihan', 'keuangan', 'fasilitas', 'kegiatan', 'lainnya'];
-
         $request->validate([
             'title' => 'required|string|max:100',
             'description' => 'required|string|max:500',
-            'category' => ['required', Rule::in($categories)],
+            'category' => 'required|string|in:umum,keamanan,kebersihan,keuangan,fasilitas,kegiatan,lainnya',
             'end_date' => 'required|date|after:now',
             'options' => 'required|array|min:2|max:8',
             'options.*' => 'required|string|max:100|distinct',
             'allow_multiple' => 'boolean',
             'anonymous' => 'boolean',
-            'notify_result' => 'boolean'
+            'notify_result' => 'boolean',
         ]);
 
         DB::beginTransaction();
+
         try {
-            // Create poll
-            $poll = Poll::create([
+            $user = Auth::user();
+
+            // Create polling
+            $polling = Poll::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'category' => $request->category,
                 'end_date' => $request->end_date,
-                'allow_multiple' => $request->boolean('allow_multiple', false),
-                'anonymous' => $request->boolean('anonymous', false),
-                'notify_result' => $request->boolean('notify_result', true),
+                'allow_multiple' => $request->has('allow_multiple'),
+                'anonymous' => $request->has('anonymous'),
+                'notify_result' => $request->has('notify_result'),
+                'user_id' => $user->id,
+                'rt' => $user->rt,
+                'rw' => $user->rw,
                 'status' => 'active',
-                'created_by' => Auth::id()
             ]);
 
-            // Create options
-            foreach ($request->options as $index => $optionText) {
-                if (trim($optionText)) {
+            // Create poll options
+            foreach ($request->options as $index => $option) {
+                if (trim($option) !== '') {
                     PollOption::create([
-                        'poll_id' => $poll->id,
-                        'option_text' => trim($optionText),
-                        'order' => $index + 1
+                        'poll_id' => $polling->id,
+                        'option_text' => trim($option),
+                        'order' => $index + 1,
                     ]);
                 }
             }
@@ -136,337 +111,335 @@ class PollController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withInput()
-                ->with('error', 'Terjadi kesalahan saat membuat polling. Silakan coba lagi.');
+
+            \Log::error('Error creating poll: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Terjadi kesalahan saat membuat polling. Silakan coba lagi.']);
         }
     }
 
     /**
-     * Display the specified poll
+     * Display the specified resource.
      */
-    public function show(Poll $poll)
+    public function show(Poll $polling)
     {
-        return $this->vote($poll);
+        // Check if user can access this polling (same RT/RW)
+        $user = Auth::user();
+        if ($polling->rt !== $user->rt || $polling->rw !== $user->rw) {
+            return redirect()->route('polling.index')
+                ->withErrors(['error' => 'Anda tidak dapat mengakses polling ini.']);
+        }
+
+        // Load related data
+        $polling->load(['options.votes', 'user', 'votes.user', 'votes.pollOption']);
+
+        // Check if user has voted
+        $userVote = $polling->votes->where('user_id', Auth::id())->first();
+
+        // Get voting statistics
+        $totalVotes = $polling->votes->count();
+        $totalParticipants = $polling->votes->unique('user_id')->count();
+
+        // Calculate option statistics
+        $optionStats = $polling->options->map(function ($option) use ($totalVotes) {
+            $optionVotes = $option->votes->count();
+            return [
+                'id' => $option->id,
+                'text' => $option->option_text,
+                'votes' => $optionVotes,
+                'percentage' => $totalVotes > 0 ? round(($optionVotes / $totalVotes) * 100, 1) : 0,
+            ];
+        });
+
+        // Get total users in RT/RW for participation calculation
+        $totalUsers = User::where('rt', $polling->rt)->where('rw', $polling->rw)->count();
+
+        return view('polling.vote', compact('polling', 'userVote', 'totalVotes', 'totalParticipants', 'optionStats', 'totalUsers'));
     }
 
     /**
-     * Display the specified poll for voting
+     * Show the form for editing the specified resource.
      */
-    public function vote(Poll $poll)
+    public function edit(Poll $polling)
     {
-        $poll->load(['creator', 'options', 'votes.user', 'votes.option']);
+        $user = Auth::user();
 
-        // Check if user has already voted
-        $userVotes = collect();
-        $hasVoted = false;
-
-        if (Auth::check()) {
-            $userVotes = PollVote::where('poll_id', $poll->id)
-                ->where('user_id', Auth::id())
-                ->with('option')
-                ->get();
-            $hasVoted = $userVotes->isNotEmpty();
+        // Only allow editing if user is the creator and polling is still active
+        if (
+            $polling->user_id !== $user->id || $polling->end_date < now() ||
+            $polling->rt !== $user->rt || $polling->rw !== $user->rw
+        ) {
+            return redirect()->route('polling.index')
+                ->withErrors(['error' => 'Anda tidak dapat mengedit polling ini.']);
         }
 
-        // Get poll statistics
-        $totalVotes = PollVote::where('poll_id', $poll->id)->count();
-        $uniqueVoters = PollVote::where('poll_id', $poll->id)->distinct('user_id')->count();
-        $totalUsers = User::where('status', 'active')->count();
-        $participationPercentage = $totalUsers > 0 ? round(($uniqueVoters / $totalUsers) * 100, 1) : 0;
+        $polling->load('options');
 
-        // Get results for each option
-        $results = collect();
-        foreach ($poll->options as $option) {
-            $voteCount = PollVote::where('option_id', $option->id)->count();
-            $percentage = $totalVotes > 0 ? round(($voteCount / $totalVotes) * 100, 1) : 0;
-
-            $results->push([
-                'option' => $option,
-                'votes' => $voteCount,
-                'percentage' => $percentage
-            ]);
-        }
-
-        // Get comments with replies
-        $comments = PollComment::where('poll_id', $poll->id)
-            ->whereNull('parent_id')
-            ->with(['user', 'replies.user', 'likes'])
-            ->latest()
-            ->paginate(10);
-
-        // Get recent participants
-        $participants = PollVote::where('poll_id', $poll->id)
-            ->with('user')
-            ->select('user_id', 'created_at')
-            ->distinct('user_id')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-
-        return view('polling.vote', compact(
-            'poll',
-            'userVotes',
-            'hasVoted',
-            'totalVotes',
-            'uniqueVoters',
-            'participationPercentage',
-            'results',
-            'comments',
-            'participants'
-        ));
+        return view('polling.edit', compact('polling'));
     }
 
     /**
-     * Submit a vote
+     * Update the specified resource in storage.
      */
-    public function submitVote(Request $request, Poll $poll)
+    public function update(Request $request, Poll $polling)
     {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Anda harus login untuk vote'], 401);
-        }
+        $user = Auth::user();
 
-        if (!$this->isActive($poll)) {
-            return response()->json(['error' => 'Polling sudah berakhir'], 400);
-        }
-
-        if (!$poll->allow_multiple && $this->hasUserVoted($poll, Auth::id())) {
-            return response()->json(['error' => 'Anda sudah memberikan suara'], 400);
+        // Only allow updating if user is the creator and polling is still active
+        if (
+            $polling->user_id !== $user->id || $polling->end_date < now() ||
+            $polling->rt !== $user->rt || $polling->rw !== $user->rw
+        ) {
+            return redirect()->route('polling.index')
+                ->withErrors(['error' => 'Anda tidak dapat mengupdate polling ini.']);
         }
 
         $request->validate([
-            'option_id' => $poll->allow_multiple ? 'required|array' : 'required|integer',
-            'option_id.*' => 'exists:poll_options,id'
+            'title' => 'required|string|max:100',
+            'description' => 'required|string|max:500',
+            'category' => 'required|string|in:umum,keamanan,kebersihan,keuangan,fasilitas,kegiatan,lainnya',
+            'end_date' => 'required|date|after:now',
+            'options' => 'required|array|min:2|max:8',
+            'options.*' => 'required|string|max:100|distinct',
+            'allow_multiple' => 'boolean',
+            'anonymous' => 'boolean',
+            'notify_result' => 'boolean',
         ]);
 
         DB::beginTransaction();
-        try {
-            $optionIds = $poll->allow_multiple
-                ? $request->option_id
-                : [$request->option_id];
 
-            // Remove existing votes if allow_multiple is true and user is changing vote
-            if ($poll->allow_multiple && $this->hasUserVoted($poll, Auth::id())) {
-                PollVote::where('poll_id', $poll->id)
-                    ->where('user_id', Auth::id())
-                    ->delete();
+        try {
+            // Update polling
+            $polling->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'end_date' => $request->end_date,
+                'allow_multiple' => $request->has('allow_multiple'),
+                'anonymous' => $request->has('anonymous'),
+                'notify_result' => $request->has('notify_result'),
+            ]);
+
+            // Delete existing options (only if no votes exist)
+            if ($polling->votes->count() === 0) {
+                $polling->options()->delete();
+
+                // Create new options
+                foreach ($request->options as $index => $option) {
+                    if (trim($option) !== '') {
+                        PollOption::create([
+                            'poll_id' => $polling->id,
+                            'option_text' => trim($option),
+                            'order' => $index + 1,
+                        ]);
+                    }
+                }
             }
 
-            foreach ($optionIds as $optionId) {
-                // Verify option belongs to this poll
-                $option = PollOption::where('id', $optionId)
-                    ->where('poll_id', $poll->id)
-                    ->first();
+            DB::commit();
 
-                if (!$option) {
-                    throw new \Exception('Invalid option selected');
-                }
+            return redirect()->route('polling.show', $polling)
+                ->with('success', 'Polling berhasil diupdate!');
 
-                PollVote::create([
-                    'poll_id' => $poll->id,
-                    'option_id' => $optionId,
-                    'user_id' => Auth::id(),
-                    'ip_address' => $request->ip()
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Terjadi kesalahan saat mengupdate polling. Silakan coba lagi.']);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Poll $polling)
+    {
+        $user = Auth::user();
+
+        // Only allow deletion if user is the creator
+        if ($polling->user_id !== $user->id || $polling->rt !== $user->rt || $polling->rw !== $user->rw) {
+            return redirect()->route('polling.index')
+                ->withErrors(['error' => 'Anda tidak dapat menghapus polling ini.']);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Delete all related data
+            $polling->votes()->delete();
+            $polling->options()->delete();
+            $polling->delete();
+
+            DB::commit();
+
+            return redirect()->route('polling.index')
+                ->with('success', 'Polling berhasil dihapus!');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return redirect()->route('polling.index')
+                ->withErrors(['error' => 'Terjadi kesalahan saat menghapus polling. Silakan coba lagi.']);
+        }
+    }
+
+    /**
+     * Submit a vote for the specified polling.
+     */
+    public function vote(Request $request, Poll $polling)
+    {
+        $user = Auth::user();
+
+        // Check if user can vote (same RT/RW)
+        if ($polling->rt !== $user->rt || $polling->rw !== $user->rw) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Anda tidak dapat voting untuk polling ini.'], 403);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Anda tidak dapat voting untuk polling ini.']);
+        }
+
+        // Check if polling is still active
+        if ($polling->end_date < now()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Polling sudah berakhir.'], 403);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Polling sudah berakhir.']);
+        }
+
+        // Check if user has already voted
+        $existingVote = $polling->votes->where('user_id', $user->id)->first();
+        if ($existingVote) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Anda sudah memberikan suara untuk polling ini.'], 403);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Anda sudah memberikan suara untuk polling ini.']);
+        }
+
+        $request->validate([
+            'options' => 'required|array|min:1',
+            'options.*' => 'exists:poll_options,id',
+        ]);
+
+        // Validate that selected options belong to this poll
+        $validOptions = PollOption::where('poll_id', $polling->id)
+            ->whereIn('id', $request->options)
+            ->pluck('id')
+            ->toArray();
+
+        if (count($validOptions) !== count($request->options)) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Pilihan tidak valid.'], 422);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Pilihan tidak valid.']);
+        }
+
+        // Check if multiple selection is allowed
+        if (!$polling->allow_multiple && count($request->options) > 1) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Hanya boleh memilih satu opsi.'], 422);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Hanya boleh memilih satu opsi.']);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Create votes for each selected option
+            foreach ($request->options as $optionId) {
+                Vote::create([
+                    'poll_id' => $polling->id,
+                    'poll_option_id' => $optionId,
+                    'user_id' => $user->id,
+                    'rt' => $user->rt,
+                    'rw' => $user->rw,
+                    'ip_address' => $request->ip(),
                 ]);
             }
 
             DB::commit();
 
-            // Get updated results
-            $results = $this->getPollResults($poll);
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Suara Anda berhasil disimpan!'], 200);
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Suara berhasil disimpan!',
-                'results' => $results
-            ]);
+            return redirect()->route('polling.show', $polling)
+                ->with('success', 'Suara Anda berhasil disimpan!');
 
         } catch (\Exception $e) {
             DB::rollback();
-            return response()->json(['error' => 'Gagal menyimpan suara: ' . $e->getMessage()], 500);
+
+            \Log::error('Error voting: ' . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Terjadi kesalahan saat menyimpan suara.'], 500);
+            }
+
+            return redirect()->back()
+                ->withErrors(['error' => 'Terjadi kesalahan saat menyimpan suara. Silakan coba lagi.']);
         }
     }
 
     /**
-     * Get poll results
-     */
-    public function results(Poll $poll)
-    {
-        $results = $this->getPollResults($poll);
-        $totalVotes = PollVote::where('poll_id', $poll->id)->count();
-        $uniqueVoters = PollVote::where('poll_id', $poll->id)->distinct('user_id')->count();
-        $totalUsers = User::where('status', 'active')->count();
-        $participationPercentage = $totalUsers > 0 ? round(($uniqueVoters / $totalUsers) * 100, 1) : 0;
-
-        // Find winner
-        $winner = $results->sortByDesc('votes')->first();
-
-        return response()->json([
-            'results' => $results,
-            'winner' => $winner,
-            'total_votes' => $totalVotes,
-            'unique_voters' => $uniqueVoters,
-            'participation_percentage' => $participationPercentage
-        ]);
-    }
-
-    /**
-     * Add comment to poll
-     */
-    public function addComment(Request $request, Poll $poll)
-    {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Anda harus login untuk berkomentar'], 401);
-        }
-
-        $request->validate([
-            'comment' => 'required|string|max:500',
-            'parent_id' => 'nullable|exists:poll_comments,id'
-        ]);
-
-        $comment = PollComment::create([
-            'poll_id' => $poll->id,
-            'user_id' => Auth::id(),
-            'parent_id' => $request->parent_id,
-            'comment' => $request->comment
-        ]);
-
-        $comment->load('user');
-
-        return response()->json([
-            'success' => true,
-            'comment' => $comment,
-            'message' => 'Komentar berhasil ditambahkan!'
-        ]);
-    }
-
-    /**
-     * Like/unlike a comment
-     */
-    public function toggleCommentLike(Request $request, PollComment $comment)
-    {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Anda harus login'], 401);
-        }
-
-        $userId = Auth::id();
-        $existingLike = PollCommentLike::where('comment_id', $comment->id)
-            ->where('user_id', $userId)
-            ->first();
-
-        if ($existingLike) {
-            $existingLike->delete();
-            $liked = false;
-        } else {
-            PollCommentLike::create([
-                'comment_id' => $comment->id,
-                'user_id' => $userId
-            ]);
-            $liked = true;
-        }
-
-        $likesCount = PollCommentLike::where('comment_id', $comment->id)->count();
-
-        return response()->json([
-            'success' => true,
-            'liked' => $liked,
-            'likes_count' => $likesCount
-        ]);
-    }
-
-    /**
-     * Delete a poll (soft delete)
-     */
-    public function destroy(Poll $poll)
-    {
-        if ($poll->created_by !== Auth::id() && !Auth::user()->isAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $poll->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Polling berhasil dihapus'
-        ]);
-    }
-
-    /**
-     * Get active polls for API
-     */
-    public function getActivePolls()
-    {
-        $activePolls = Poll::where('end_date', '>', now())
-            ->where('status', 'active')
-            ->with(['creator', 'options'])
-            ->withCount('votes')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        return response()->json($activePolls);
-    }
-
-    /**
-     * Get poll statistics for dashboard
+     * Get polling statistics for dashboard or reports.
      */
     public function statistics()
     {
+        $user = Auth::user();
+
         $stats = [
-            'total_polls' => Poll::count(),
-            'active_polls' => Poll::where('end_date', '>', now())->where('status', 'active')->count(),
-            'ended_polls' => Poll::where('end_date', '<=', now())->orWhere('status', 'closed')->count(),
-            'total_votes' => PollVote::count(),
-            'recent_polls' => Poll::with('creator')->orderBy('created_at', 'desc')->limit(5)->get()
+            'total_pollings' => Poll::where('rt', $user->rt)->where('rw', $user->rw)->count(),
+            'active_pollings' => Poll::where('rt', $user->rt)->where('rw', $user->rw)->where('end_date', '>', now())->count(),
+            'ended_pollings' => Poll::where('rt', $user->rt)->where('rw', $user->rw)->where('end_date', '<=', now())->count(),
+            'total_votes' => Vote::where('rt', $user->rt)->where('rw', $user->rw)->count(),
+            'total_participants' => Vote::where('rt', $user->rt)->where('rw', $user->rw)->distinct('user_id')->count(),
         ];
 
         return response()->json($stats);
     }
 
-    // Helper methods
-    private function hasUserVoted($poll, $userId)
+    /**
+     * Load more participants via AJAX
+     */
+    public function loadMoreParticipants(Request $request, Poll $polling)
     {
-        if (!$userId)
-            return false;
+        $user = Auth::user();
 
-        return PollVote::where('poll_id', $poll->id)
-            ->where('user_id', $userId)
-            ->exists();
-    }
-
-    private function isActive($poll)
-    {
-        return $poll->status === 'active' && $poll->end_date > now();
-    }
-
-    private function hasEnded($poll)
-    {
-        return $poll->status === 'closed' || $poll->end_date <= now();
-    }
-
-    private function getParticipationPercentage($poll)
-    {
-        $uniqueVoters = PollVote::where('poll_id', $poll->id)->distinct('user_id')->count();
-        $totalUsers = User::where('status', 'active')->count();
-
-        return $totalUsers > 0 ? round(($uniqueVoters / $totalUsers) * 100, 1) : 0;
-    }
-
-    private function getPollResults($poll)
-    {
-        $totalVotes = PollVote::where('poll_id', $poll->id)->count();
-        $results = collect();
-
-        foreach ($poll->options as $option) {
-            $voteCount = PollVote::where('option_id', $option->id)->count();
-            $percentage = $totalVotes > 0 ? round(($voteCount / $totalVotes) * 100, 1) : 0;
-
-            $results->push([
-                'option' => $option,
-                'votes' => $voteCount,
-                'percentage' => $percentage
-            ]);
+        // Check access
+        if ($polling->rt !== $user->rt || $polling->rw !== $user->rw) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        return $results;
+        $offset = $request->get('offset', 0);
+        $limit = $request->get('limit', 10);
+
+        $participants = $polling->votes()
+            ->with('user')
+            ->select('user_id', 'created_at')
+            ->distinct('user_id')
+            ->skip($offset)
+            ->take($limit)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $participantData = $participants->map(function ($vote) {
+            return [
+                'name' => $vote->user->name,
+                'avatar_url' => $vote->user->avatar_url ?? 'https://images.unsplash.com/photo-1494790108755-2616b2e2e5cc?w=40&h=40&fit=crop&crop=face',
+                'vote_time' => $vote->created_at->diffForHumans(),
+            ];
+        });
+
+        return response()->json([
+            'participants' => $participantData,
+            'has_more' => $participants->count() === $limit
+        ]);
     }
 }

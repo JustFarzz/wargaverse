@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 class Poll extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+
+    // Tentukan nama tabel yang benar
+    protected $table = 'pollings';
 
     protected $fillable = [
         'title',
@@ -19,8 +20,10 @@ class Poll extends Model
         'allow_multiple',
         'anonymous',
         'notify_result',
+        'user_id',
         'status',
-        'created_by'
+        'rt',
+        'rw',
     ];
 
     protected $casts = [
@@ -30,88 +33,19 @@ class Poll extends Model
         'notify_result' => 'boolean',
     ];
 
-    // Relationships
-    public function creator()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class);
     }
 
     public function options()
     {
-        return $this->hasMany(PollOption::class)->orderBy('order');
+        return $this->hasMany(PollOption::class, 'poll_id')->orderBy('order');
     }
 
     public function votes()
     {
-        return $this->hasMany(PollVote::class);
-    }
-
-    public function comments()
-    {
-        return $this->hasMany(PollComment::class)->whereNull('parent_id');
-    }
-
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active')
-            ->where('end_date', '>', now());
-    }
-
-    public function scopeEnded($query)
-    {
-        return $query->where(function ($q) {
-            $q->where('status', 'closed')
-                ->orWhere('end_date', '<=', now());
-        });
-    }
-
-    public function scopeRecent($query)
-    {
-        return $query->orderBy('created_at', 'desc');
-    }
-
-    // Accessors
-    public function getIsActiveAttribute()
-    {
-        return $this->status === 'active' && $this->end_date > now();
-    }
-
-    public function getHasEndedAttribute()
-    {
-        return $this->status === 'closed' || $this->end_date <= now();
-    }
-
-    public function getTotalVotesAttribute()
-    {
-        return $this->votes()->count();
-    }
-
-    public function getUniqueVotersAttribute()
-    {
-        return $this->votes()->distinct('user_id')->count();
-    }
-
-    public function getParticipationPercentageAttribute()
-    {
-        $totalUsers = User::where('status', 'active')->count();
-        $uniqueVoters = $this->unique_voters;
-
-        return $totalUsers > 0 ? round(($uniqueVoters / $totalUsers) * 100, 1) : 0;
-    }
-
-    // Methods
-    public function hasUserVoted($userId)
-    {
-        if (!$userId)
-            return false;
-
-        return $this->votes()->where('user_id', $userId)->exists();
-    }
-
-    public function getUserVote($userId)
-    {
-        return $this->votes()->where('user_id', $userId)->with('option')->get();
+        return $this->hasMany(Vote::class, 'poll_id');
     }
 
     public function isActive()
@@ -119,8 +53,31 @@ class Poll extends Model
         return $this->status === 'active' && $this->end_date > now();
     }
 
-    public function hasEnded()
+    public function hasUserVoted($userId)
     {
-        return $this->status === 'closed' || $this->end_date <= now();
+        return $this->votes()->where('user_id', $userId)->exists();
+    }
+
+    public function getTotalVotesAttribute()
+    {
+        return $this->votes()->count();
+    }
+
+    public function getTotalParticipantsAttribute()
+    {
+        return $this->votes()->distinct('user_id')->count();
+    }
+
+    // Scope untuk lokasi RT/RW
+    public function scopeByLocation($query, $rt, $rw)
+    {
+        return $query->where('rt', $rt)->where('rw', $rw);
+    }
+
+    // Scope untuk polling aktif
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active')
+            ->where('end_date', '>', now());
     }
 }

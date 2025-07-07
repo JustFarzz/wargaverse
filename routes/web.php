@@ -83,20 +83,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/buat', 'create')->name('create');
         Route::post('/buat', 'store')->name('store');
-        Route::get('/{poll}', 'show')->name('show');
-        Route::get('/{poll}/vote', 'showVote')->name('vote');
-        Route::post('/{poll}/vote', 'vote')->name('vote.post');
-        Route::get('/{poll}/hasil', 'results')->name('results');
+
+        // Route untuk melihat detail polling dan voting
+        Route::get('/{polling}', 'show')->name('show');
+
+        // Route untuk submit vote
+        Route::post('/{polling}/vote', 'vote')->name('vote');
+
+        // Route untuk melihat hasil (opsional, karena sudah ditangani di show)
+        Route::get('/{polling}/hasil', 'show')->name('results');
 
         // Poll creator or admin can edit/delete
-        Route::get('/{poll}/edit', 'edit')->name('edit');
-        Route::put('/{poll}', 'update')->name('update');
-        Route::delete('/{poll}', 'destroy')->name('destroy');
+        Route::get('/{polling}/edit', 'edit')->name('edit');
+        Route::put('/{polling}', 'update')->name('update');
+        Route::delete('/{polling}', 'destroy')->name('destroy');
 
         // Admin only routes
         Route::middleware(['role:admin'])->group(function () {
-            Route::patch('/{poll}/tutup', 'closePoll')->name('close');
-            Route::patch('/{poll}/buka', 'openPoll')->name('open');
+            Route::patch('/{polling}/tutup', 'closePoll')->name('close');
+            Route::patch('/{polling}/buka', 'openPoll')->name('open');
         });
     });
 
@@ -126,13 +131,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{transaction}', 'update')->name('update');
         Route::delete('/{transaction}', 'destroy')->name('destroy');
 
-        // Reports and summaries
         Route::get('/laporan/bulanan', 'monthlyReport')->name('monthly-report');
         Route::get('/laporan/tahunan', 'yearlyReport')->name('yearly-report');
         Route::get('/export/excel', 'exportExcel')->name('export.excel');
         Route::get('/export/pdf', 'exportPdf')->name('export.pdf');
 
-        // Admin only routes
         Route::middleware(['role:admin'])->group(function () {
             Route::patch('/{transaction}/verifikasi', 'verify')->name('verify');
             Route::patch('/{transaction}/tolak', 'reject')->name('reject');

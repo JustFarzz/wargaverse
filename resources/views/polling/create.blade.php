@@ -12,6 +12,24 @@
     @include('components.navbar')
 
     <div class="polling-container">
+        <!-- Display Validation Errors -->
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- Display Success Message -->
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <!-- Breadcrumb -->
         <div class="breadcrumb">
             <a href="{{ route('polling.index') }}">
@@ -50,10 +68,13 @@
                             </label>
                             <input type="text" id="title" name="title" required 
                                    placeholder="Contoh: Pemilihan Jadwal Kerja Bakti Bulanan"
-                                   maxlength="100">
+                                   maxlength="100" value="{{ old('title') }}">
                             <div class="char-counter">
-                                <span id="titleCounter">0</span>/100 karakter
+                                <span id="titleCounter">{{ old('title') ? strlen(old('title')) : 0 }}</span>/100 karakter
                             </div>
+                            @error('title')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="form-group">
@@ -63,10 +84,13 @@
                             </label>
                             <textarea id="description" name="description" required 
                                       placeholder="Jelaskan tujuan polling, latar belakang, dan informasi penting lainnya..."
-                                      rows="4" maxlength="500"></textarea>
+                                      rows="4" maxlength="500">{{ old('description') }}</textarea>
                             <div class="char-counter">
-                                <span id="descCounter">0</span>/500 karakter
+                                <span id="descCounter">{{ old('description') ? strlen(old('description')) : 0 }}</span>/500 karakter
                             </div>
+                            @error('description')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="form-row">
@@ -76,14 +100,17 @@
                                     Kategori
                                 </label>
                                 <select id="category" name="category">
-                                    <option value="umum">Umum</option>
-                                    <option value="keamanan">Keamanan</option>
-                                    <option value="kebersihan">Kebersihan</option>
-                                    <option value="keuangan">Keuangan</option>
-                                    <option value="fasilitas">Fasilitas</option>
-                                    <option value="kegiatan">Kegiatan</option>
-                                    <option value="lainnya">Lainnya</option>
+                                    <option value="umum" {{ old('category') == 'umum' ? 'selected' : '' }}>Umum</option>
+                                    <option value="keamanan" {{ old('category') == 'keamanan' ? 'selected' : '' }}>Keamanan</option>
+                                    <option value="kebersihan" {{ old('category') == 'kebersihan' ? 'selected' : '' }}>Kebersihan</option>
+                                    <option value="keuangan" {{ old('category') == 'keuangan' ? 'selected' : '' }}>Keuangan</option>
+                                    <option value="fasilitas" {{ old('category') == 'fasilitas' ? 'selected' : '' }}>Fasilitas</option>
+                                    <option value="kegiatan" {{ old('category') == 'kegiatan' ? 'selected' : '' }}>Kegiatan</option>
+                                    <option value="lainnya" {{ old('category') == 'lainnya' ? 'selected' : '' }}>Lainnya</option>
                                 </select>
+                                @error('category')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="form-group">
@@ -91,7 +118,11 @@
                                     <i class="fas fa-calendar-alt"></i>
                                     Tanggal Berakhir <span class="required">*</span>
                                 </label>
-                                <input type="datetime-local" id="end_date" name="end_date" required>
+                                <input type="datetime-local" id="end_date" name="end_date" required 
+                                       value="{{ old('end_date') }}">
+                                @error('end_date')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -105,35 +136,55 @@
                     </div>
                     <div class="card-content">
                         <div class="options-container" id="optionsContainer">
-                            <div class="option-group">
-                                <label>
-                                    <i class="fas fa-check-circle"></i>
-                                    Pilihan 1 <span class="required">*</span>
-                                </label>
-                                <div class="option-input">
-                                    <input type="text" name="options[]" required 
-                                           placeholder="Contoh: Sabtu pagi (08:00-10:00)"
-                                           maxlength="100">
-                                    <button type="button" class="btn-remove-option" disabled>
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                            @if(old('options'))
+                                @foreach(old('options') as $index => $option)
+                                    <div class="option-group">
+                                        <label>
+                                            <i class="fas fa-check-circle"></i>
+                                            Pilihan {{ $index + 1 }} @if($index < 2)<span class="required">*</span>@endif
+                                        </label>
+                                        <div class="option-input">
+                                            <input type="text" name="options[]" 
+                                                   placeholder="Masukkan pilihan..."
+                                                   maxlength="100" value="{{ $option }}"
+                                                   @if($index < 2) required @endif>
+                                            <button type="button" class="btn-remove-option" @if($index < 2) disabled @endif>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="option-group">
+                                    <label>
+                                        <i class="fas fa-check-circle"></i>
+                                        Pilihan 1 <span class="required">*</span>
+                                    </label>
+                                    <div class="option-input">
+                                        <input type="text" name="options[]" required 
+                                               placeholder="Contoh: Sabtu pagi (08:00-10:00)"
+                                               maxlength="100">
+                                        <button type="button" class="btn-remove-option" disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="option-group">
-                                <label>
-                                    <i class="fas fa-check-circle"></i>
-                                    Pilihan 2 <span class="required">*</span>
-                                </label>
-                                <div class="option-input">
-                                    <input type="text" name="options[]" required 
-                                           placeholder="Contoh: Minggu pagi (08:00-10:00)"
-                                           maxlength="100">
-                                    <button type="button" class="btn-remove-option" disabled>
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                <div class="option-group">
+                                    <label>
+                                        <i class="fas fa-check-circle"></i>
+                                        Pilihan 2 <span class="required">*</span>
+                                    </label>
+                                    <div class="option-input">
+                                        <input type="text" name="options[]" required 
+                                               placeholder="Contoh: Minggu pagi (08:00-10:00)"
+                                               maxlength="100">
+                                        <button type="button" class="btn-remove-option" disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
 
                         <button type="button" id="addOption" class="btn btn-secondary">
@@ -145,6 +196,13 @@
                             <i class="fas fa-info-circle"></i>
                             <span>Maksimal 8 pilihan. Setiap pilihan maksimal 100 karakter</span>
                         </div>
+
+                        @error('options')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                        @error('options.*')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
@@ -158,7 +216,8 @@
                         <div class="settings-group">
                             <div class="setting-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="allow_multiple" id="allowMultiple">
+                                    <input type="checkbox" name="allow_multiple" id="allowMultiple" value="1" 
+                                           {{ old('allow_multiple') ? 'checked' : '' }}>
                                     <span class="checkmark"></span>
                                     <div class="setting-info">
                                         <strong>Izinkan Pilihan Ganda</strong>
@@ -169,7 +228,8 @@
 
                             <div class="setting-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="anonymous" id="anonymous">
+                                    <input type="checkbox" name="anonymous" id="anonymous" value="1" 
+                                           {{ old('anonymous') ? 'checked' : '' }}>
                                     <span class="checkmark"></span>
                                     <div class="setting-info">
                                         <strong>Voting Anonim</strong>
@@ -180,7 +240,8 @@
 
                             <div class="setting-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" name="notify_result" id="notifyResult" checked>
+                                    <input type="checkbox" name="notify_result" id="notifyResult" value="1" 
+                                           {{ old('notify_result') ? 'checked' : '' }} checked>
                                     <span class="checkmark"></span>
                                     <div class="setting-info">
                                         <strong>Notifikasi Hasil</strong>
@@ -272,13 +333,48 @@
     </div>
 
     <script>
-        let optionCount = 2;
+        // Initialize option count based on existing options
+        let optionCount = 2; // Start with 2 default options
         const maxOptions = 8;
+
+        // Initialize character counters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update option count based on existing options
+            const existingOptions = document.querySelectorAll('.option-group');
+            optionCount = existingOptions.length;
+            
+            // Initialize character counters
+            const titleInput = document.getElementById('title');
+            const descInput = document.getElementById('description');
+            const titleCounter = document.getElementById('titleCounter');
+            const descCounter = document.getElementById('descCounter');
+            
+            updateCharCounter(titleInput, titleCounter);
+            updateCharCounter(descInput, descCounter);
+            
+            // Set minimum date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0); // Set to beginning of day
+            
+            const endDateInput = document.getElementById('end_date');
+            endDateInput.min = tomorrow.toISOString().slice(0, 16);
+            
+            // If no value is set, set default to tomorrow at 23:59
+            if (!endDateInput.value) {
+                tomorrow.setHours(23, 59, 0, 0);
+                endDateInput.value = tomorrow.toISOString().slice(0, 16);
+            }
+            
+            // Update option count and buttons
+            updateRemoveButtons();
+            updateAddButtonVisibility();
+        });
 
         // Character counter
         function updateCharCounter(input, counter) {
             const current = input.value.length;
-            const max = input.getAttribute('maxlength');
+            const max = parseInt(input.getAttribute('maxlength'));
             counter.textContent = current;
             
             if (current > max * 0.8) {
@@ -325,32 +421,35 @@
             
             optionsContainer.appendChild(optionGroup);
             updateRemoveButtons();
-            
-            if (optionCount >= maxOptions) {
-                this.style.display = 'none';
-            }
+            updateAddButtonVisibility();
         });
 
         // Remove option functionality
         document.addEventListener('click', function(e) {
-            if (e.target.closest('.btn-remove-option')) {
-                e.target.closest('.option-group').remove();
+            if (e.target.closest('.btn-remove-option') && !e.target.closest('.btn-remove-option').disabled) {
+                const optionGroup = e.target.closest('.option-group');
+                optionGroup.remove();
                 optionCount--;
                 updateOptionLabels();
                 updateRemoveButtons();
-                
-                // Show add button if hidden
-                if (optionCount < maxOptions) {
-                    document.getElementById('addOption').style.display = 'inline-flex';
-                }
+                updateAddButtonVisibility();
             }
         });
 
         function updateRemoveButtons() {
             const removeButtons = document.querySelectorAll('.btn-remove-option');
-            removeButtons.forEach(btn => {
-                btn.disabled = optionCount <= 2;
+            removeButtons.forEach((btn, index) => {
+                btn.disabled = index < 2; // First two options can't be removed
             });
+        }
+
+        function updateAddButtonVisibility() {
+            const addButton = document.getElementById('addOption');
+            if (optionCount >= maxOptions) {
+                addButton.style.display = 'none';
+            } else {
+                addButton.style.display = 'inline-flex';
+            }
         }
 
         function updateOptionLabels() {
@@ -358,8 +457,16 @@
             optionGroups.forEach((group, index) => {
                 const label = group.querySelector('label');
                 const icon = label.querySelector('i');
-                const required = label.querySelector('.required');
-                label.innerHTML = `${icon.outerHTML} Pilihan ${index + 1} ${required ? required.outerHTML : ''}`;
+                const required = index < 2 ? ' <span class="required">*</span>' : '';
+                label.innerHTML = `${icon.outerHTML} Pilihan ${index + 1}${required}`;
+                
+                // Update required attribute on input
+                const input = group.querySelector('input');
+                if (index < 2) {
+                    input.setAttribute('required', 'required');
+                } else {
+                    input.removeAttribute('required');
+                }
             });
         }
 
@@ -379,27 +486,33 @@
                     'Berakhir: ' + date.toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'long',
-                        year: 'numeric'
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
                     });
             }
             
             // Update preview options
             const options = Array.from(document.querySelectorAll('input[name="options[]"]'))
-                .map(input => input.value)
-                .filter(value => value.trim() !== '');
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
             
             const optionsList = document.getElementById('previewOptionsList');
             optionsList.innerHTML = '';
             
-            options.forEach((option, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'preview-option';
-                optionDiv.innerHTML = `
-                    <input type="radio" name="preview-vote" id="preview-${index}" disabled>
-                    <label for="preview-${index}">${option}</label>
-                `;
-                optionsList.appendChild(optionDiv);
-            });
+            if (options.length > 0) {
+                options.forEach((option, index) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'preview-option';
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="preview-vote" id="preview-${index}" disabled>
+                        <label for="preview-${index}">${option}</label>
+                    `;
+                    optionsList.appendChild(optionDiv);
+                });
+            } else {
+                optionsList.innerHTML = '<p>Belum ada pilihan yang diisi</p>';
+            }
             
             document.getElementById('previewModal').style.display = 'flex';
         });
@@ -415,21 +528,32 @@
             }
         });
 
-        // Set minimum date to tomorrow
-        document.addEventListener('DOMContentLoaded', function() {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            
-            const endDateInput = document.getElementById('end_date');
-            endDateInput.min = tomorrow.toISOString().slice(0, 16);
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('previewModal').style.display === 'flex') {
+                closePreview();
+            }
         });
 
         // Form validation
         document.getElementById('pollForm').addEventListener('submit', function(e) {
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const endDate = document.getElementById('end_date').value;
+            
+            // Check required fields
+            if (!title || !description || !endDate) {
+                e.preventDefault();
+                alert('Harap isi semua field yang wajib');
+                return;
+            }
+            
+            // Get all option values
             const options = Array.from(document.querySelectorAll('input[name="options[]"]'))
                 .map(input => input.value.trim())
                 .filter(value => value !== '');
             
+            // Check minimum options
             if (options.length < 2) {
                 e.preventDefault();
                 alert('Minimal 2 pilihan harus diisi');
@@ -437,12 +561,43 @@
             }
             
             // Check for duplicate options
-            const uniqueOptions = [...new Set(options)];
+            const uniqueOptions = [...new Set(options.map(opt => opt.toLowerCase()))];
             if (uniqueOptions.length !== options.length) {
                 e.preventDefault();
                 alert('Pilihan tidak boleh sama');
                 return;
             }
+            
+            // Check if end date is in the future
+            const endDateTime = new Date(endDate);
+            const now = new Date();
+            if (endDateTime <= now) {
+                e.preventDefault();
+                alert('Tanggal berakhir harus di masa depan');
+                return;
+            }
+            
+            // Check if end date is not too far in the future (optional validation)
+            const maxFutureDate = new Date();
+            maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 1);
+            if (endDateTime > maxFutureDate) {
+                if (!confirm('Tanggal berakhir lebih dari 1 tahun. Apakah Anda yakin?')) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            
+            // Reset button after 5 seconds as fallback
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }, 5000);
         });
     </script>
 </body>

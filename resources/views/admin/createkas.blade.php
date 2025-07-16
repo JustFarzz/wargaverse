@@ -54,7 +54,7 @@
                         </div>
                     </div>
                     <div class="card-content">
-                        <form id="kasForm" action="{{ route('kas.store') }}" method="POST" enctype="multipart/form-data">
+                        <form id="kasForm" action="{{ route('admin.kas.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             
                             <!-- Step 1: Basic Info -->
@@ -177,7 +177,7 @@
                                     <h3>Lampiran & Konfirmasi</h3>
                                     
                                     <div class="form-group">
-                                        <label for="attachments">Lampiran (Foto/Dokumen)</label>
+                                        {{-- <label for="attachments">Lampiran (Foto/Dokumen)</label>
                                         <div class="file-upload-area" id="fileUploadArea">
                                             <div class="upload-placeholder">
                                                 <i class="fas fa-cloud-upload-alt"></i>
@@ -194,7 +194,7 @@
                                         @error('attachments.*')
                                             <span class="error-message">{{ $message }}</span>
                                         @enderror
-                                    </div>
+                                    </div> --}}
     
                                     <div class="form-group">
                                         <label for="notes">Catatan Tambahan</label>
@@ -268,10 +268,10 @@
                             <i class="fas fa-check-circle"></i>
                             <p>Berikan judul yang jelas dan mudah dipahami warga</p>
                         </div>
-                        <div class="tip-item">
+                        {{-- <div class="tip-item">
                             <i class="fas fa-check-circle"></i>
                             <p>Lampirkan foto/nota untuk transparansi</p>
-                        </div>
+                        </div> --}}
                         <div class="tip-item">
                             <i class="fas fa-check-circle"></i>
                             <p>Pilih kategori yang sesuai untuk laporan</p>

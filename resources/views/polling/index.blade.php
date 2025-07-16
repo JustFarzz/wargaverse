@@ -24,10 +24,10 @@
                     <h1><i class="fas fa-poll"></i> Polling Warga</h1>
                     <p>Berpartisipasi dalam pengambilan keputusan bersama untuk kemajuan RT</p>
                 </div>
-                <a href="{{ route('polling.create') }}" class="btn btn-primary">
+                {{-- <a href="{{ route('polling.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
                     Buat Polling Baru
-                </a>
+                </a> --}}
             </div>
         </div>
 
@@ -117,10 +117,10 @@
                     <h3>Belum Ada Polling</h3>
                     <p>Saat ini tidak ada polling yang sedang berlangsung. Buat polling baru untuk melibatkan warga dalam
                         pengambilan keputusan.</p>
-                    <a href="{{ route('polling.create') }}" class="btn btn-primary">
+                    {{-- <a href="{{ route('polling.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i>
                         Buat Polling Pertama
-                    </a>
+                    </a> --}}
                 </div>
             @endforelse
         </div>

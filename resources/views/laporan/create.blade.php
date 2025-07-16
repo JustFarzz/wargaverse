@@ -1,8 +1,20 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
 
-@section('title', 'Buat Laporan Baru')
+    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-@section('content')
+    <link rel="stylesheet" href="{{ asset('css/createreport.css') }}">
+
+</head>
+<body>
+    @include('components.navbar')
+    
     <div class="create-laporan-container">
         <div class="header-section">
             <div class="breadcrumb">
@@ -11,7 +23,7 @@
                     Kembali ke Daftar Laporan
                 </a>
             </div>
-
+    
             <div class="header-content">
                 <h1 class="page-title">
                     <i class="icon-report-new"></i>
@@ -20,11 +32,11 @@
                 <p class="page-subtitle">Laporkan masalah atau keluhan yang perlu ditangani oleh RT</p>
             </div>
         </div>
-
+    
         <div class="form-container">
             <form action="{{ route('laporan.store') }}" method="POST" enctype="multipart/form-data" id="reportForm">
                 @csrf
-
+    
                 <div class="form-sections">
                     <!-- Section 1: Informasi Dasar -->
                     <div class="form-section active" data-section="1">
@@ -35,7 +47,7 @@
                             </h3>
                             <p>Berikan judul dan kategori laporan Anda</p>
                         </div>
-
+    
                         <div class="form-grid">
                             <div class="form-group full-width">
                                 <label for="title" class="form-label">
@@ -50,7 +62,7 @@
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
-
+    
                             <div class="form-group">
                                 <label for="category" class="form-label">
                                     <i class="icon-category"></i>
@@ -79,7 +91,7 @@
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
-
+    
                             <div class="form-group">
                                 <label for="priority" class="form-label">
                                     <i class="icon-priority"></i>
@@ -103,7 +115,7 @@
                             </div>
                         </div>
                     </div>
-
+    
                     <!-- Section 2: Detail Laporan -->
                     <div class="form-section" data-section="2">
                         <div class="section-header">
@@ -113,7 +125,7 @@
                             </h3>
                             <p>Jelaskan masalah secara detail dan lokasi kejadian</p>
                         </div>
-
+    
                         <div class="form-group">
                             <label for="description" class="form-label">
                                 <i class="icon-description"></i>
@@ -130,7 +142,7 @@
                                 <span class="error-message">{{ $message }}</span>
                             @enderror
                         </div>
-
+    
                         <div class="form-group">
                             <label for="location" class="form-label">
                                 <i class="icon-location"></i>
@@ -144,7 +156,7 @@
                             @enderror
                         </div>
                     </div>
-
+    
                     <!-- Section 3: Dokumentasi -->
                     <div class="form-section" data-section="3">
                         <div class="section-header">
@@ -154,7 +166,7 @@
                             </h3>
                             <p>Lampirkan foto untuk memperjelas laporan (opsional)</p>
                         </div>
-
+    
                         <div class="form-group">
                             <label for="image" class="form-label">
                                 <i class="icon-camera"></i>
@@ -185,25 +197,25 @@
                         </div>
                     </div>
                 </div>
-
+    
                 <!-- Navigation -->
                 <div class="form-navigation">
                     <button type="button" class="btn-secondary" id="prevBtn" style="display: none;">
                         <i class="icon-arrow-left"></i>
                         Sebelumnya
                     </button>
-
+    
                     <div class="progress-steps">
                         <div class="step active" data-step="1">1</div>
                         <div class="step" data-step="2">2</div>
                         <div class="step" data-step="3">3</div>
                     </div>
-
+    
                     <button type="button" class="btn-primary" id="nextBtn">
                         Selanjutnya
                         <i class="icon-arrow-right"></i>
                     </button>
-
+    
                     <button type="submit" class="btn-success" id="submitBtn" style="display: none;">
                         <i class="icon-send"></i>
                         Kirim Laporan
@@ -211,7 +223,7 @@
                 </div>
             </form>
         </div>
-
+    
         <!-- Confirmation Modal -->
         <div class="modal-overlay" id="confirmModal" style="display: none;">
             <div class="modal">
@@ -235,7 +247,7 @@
             </div>
         </div>
     </div>
-
+    
     <script>
         // Multi-step form functionality
         let currentStep = 1;
@@ -400,27 +412,27 @@
                 const style = document.createElement('style');
                 style.className = 'toast-styles';
                 style.textContent = `
-                    .toast {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 12px 20px;
-                        border-radius: 8px;
-                        color: white;
-                        font-weight: 500;
-                        z-index: 10000;
-                        min-width: 300px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        animation: slideIn 0.3s ease;
-                    }
-                    .toast.error { background-color: #e53e3e; }
-                    .toast.success { background-color: #38a169; }
-                    .toast.info { background-color: #3182ce; }
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                `;
+                        .toast {
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            padding: 12px 20px;
+                            border-radius: 8px;
+                            color: white;
+                            font-weight: 500;
+                            z-index: 10000;
+                            min-width: 300px;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                            animation: slideIn 0.3s ease;
+                        }
+                        .toast.error { background-color: #e53e3e; }
+                        .toast.success { background-color: #38a169; }
+                        .toast.info { background-color: #3182ce; }
+                        @keyframes slideIn {
+                            from { transform: translateX(100%); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                    `;
                 document.head.appendChild(style);
             }
 
@@ -499,4 +511,5 @@
         // Initialize form
         showStep(1);
     </script>
-@endsection
+</body>
+</html>

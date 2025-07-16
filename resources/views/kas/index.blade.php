@@ -6,12 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kas RT</title>
 
-    <link rel="stylesheet" href="{{ asset('css/indexkas.css') }}">
     <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{{ asset('css/indexkas.css') }}">
 
 </head>
 
 <body>
+    @include('components.navbar')
+
     <div class="kas-container">
         <!-- Header Section -->
         <div class="kas-header">
@@ -20,7 +24,7 @@
                 <p>Kelola dan pantau keuangan RT secara transparan</p>
                 <div class="current-period">Periode: {{ date('F Y') }}</div>
             </div>
-            <div class="header-actions">
+            {{-- <div class="header-actions">
                 <a href="{{ route('kas.create') }}" class="btn-primary">
                     <i class="fas fa-plus"></i>
                     Tambah Transaksi
@@ -29,7 +33,7 @@
                     <i class="fas fa-download"></i>
                     Export Laporan
                 </a>
-            </div>
+            </div> --}}
         </div>
 
         <!-- Summary Cards -->
@@ -170,23 +174,23 @@
                     <div class="card-content">
                         <div class="category-list">
                             @php
-                                $categories = [
-                                    'iuran' => 'Iuran Warga',
-                                    'keamanan' => 'Keamanan',
-                                    'infrastruktur' => 'Infrastruktur',
-                                    'acara' => 'Acara RT',
-                                    'donasi' => 'Donasi',
-                                    'operasional' => 'Operasional',
-                                ];
-                                $categoryStats = [];
-                                foreach ($categories as $key => $name) {
-                                    $amount = $transactions->where('category', $key)->sum('amount');
-                                    if ($amount > 0) {
-                                        $categoryStats[$name] = $amount;
-                                    }
-                                }
-                                arsort($categoryStats);
-                                $topCategories = array_slice($categoryStats, 0, 5, true);
+$categories = [
+    'iuran' => 'Iuran Warga',
+    'keamanan' => 'Keamanan',
+    'infrastruktur' => 'Infrastruktur',
+    'acara' => 'Acara RT',
+    'donasi' => 'Donasi',
+    'operasional' => 'Operasional',
+];
+$categoryStats = [];
+foreach ($categories as $key => $name) {
+    $amount = $transactions->where('category', $key)->sum('amount');
+    if ($amount > 0) {
+        $categoryStats[$name] = $amount;
+    }
+}
+arsort($categoryStats);
+$topCategories = array_slice($categoryStats, 0, 5, true);
                             @endphp
 
                             @forelse($topCategories as $categoryName => $amount)
@@ -236,7 +240,7 @@
                                 <div class="stat-label">Status Kas</div>
                                 <div class="stat-value progress">
                                     @php
-                                        $healthPercentage = $currentBalance > 0 ? min(100, ($currentBalance / 1000000) * 100) : 0;
+$healthPercentage = $currentBalance > 0 ? min(100, ($currentBalance / 1000000) * 100) : 0;
                                     @endphp
                                     <div class="progress-bar">
                                         <div class="progress-fill" style="width: {{ $healthPercentage }}%"></div>

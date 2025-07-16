@@ -13,6 +13,12 @@ class FinanceController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    public function adminCreatekas()
+    {
+        return view('admin.createkas');
+    }
+
     public function index()
     {
         $transactions = FinanceTransaction::with('user')
@@ -39,6 +45,43 @@ class FinanceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+    public function adminStore(Request $request)
+    {
+        // Handle file uploads
+        $attachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('kas-attachments', $filename, 'public');
+                $attachments[] = [
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'type' => $file->getMimeType(),
+                ];
+            }
+        }
+
+        // Create transaction
+        $transaction = FinanceTransaction::create([
+            'user_id' => Auth::id(),
+            'type' => $request->type,
+            'title' => $request->title,
+            'description' => $request->description,
+            'amount' => $request->amount,
+            'category' => $request->category,
+            'transaction_date' => $request->transaction_date,
+            'payment_method' => $request->payment_method ?? 'cash',
+            'is_recurring' => $request->boolean('is_recurring'),
+            'notes' => $request->notes,
+            'attachments' => !empty($attachments) ? $attachments : null,
+        ]);
+
+        return redirect()->route('kas.index')
+            ->with('success', 'Transaksi berhasil ditambahkan.');
+    }
+    
     public function store(Request $request)
     {
         // Handle file uploads

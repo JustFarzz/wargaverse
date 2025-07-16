@@ -6,12 +6,8 @@
     <title>Buat Polling Baru - RT Digital</title>
     
     <link rel="stylesheet" href="{{ asset('css/createpolling.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    @include('components.navbar')
-
     <div class="polling-container">
         <!-- Display Validation Errors -->
         @if ($errors->any())
@@ -47,12 +43,17 @@
                     <h1><i class="fas fa-plus-circle"></i> Buat Polling Baru</h1>
                     <p>Libatkan seluruh warga dalam pengambilan keputusan penting untuk RT</p>
                 </div>
+
+                <a href="{{ route('kalender.index') }}" class="btn-secondary">
+                    <i class="icon">🔙</i>
+                    Kembali
+                </a>
             </div>
         </div>
 
         <!-- Form Section -->
         <div class="form-section">
-            <form id="pollForm" class="poll-form" action="{{ route('polling.store') }}" method="POST">
+            <form id="pollForm" class="poll-form" action="{{ route('admin.polling.store') }}" method="POST">
                 @csrf
                 
                 <!-- Basic Information -->
@@ -259,7 +260,7 @@
                     <a href="{{ route('polling.index') }}" class="btn btn-cancel">
                         <i class="fas fa-times"></i>
                         Batal
-                    </a>
+                    </a> 
                     <button type="button" id="previewBtn" class="btn btn-secondary">
                         <i class="fas fa-eye"></i>
                         Preview

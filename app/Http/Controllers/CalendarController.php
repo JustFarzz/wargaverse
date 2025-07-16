@@ -13,6 +13,12 @@ class CalendarController extends Controller
     /**
      * Display calendar events
      */
+
+    public function adminCreateevent()
+    {
+        return view('admin.createevent');
+    }
+    
     public function index(Request $request)
     {
         $month = $request->get('month', now()->month);
@@ -79,6 +85,50 @@ class CalendarController extends Controller
     /**
      * Store new event
      */
+    public function adminStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'nullable|in:rapat,gotong_royong,keamanan,sosial,olahraga,keagamaan,perayaan,lainnya',
+            'event_date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'location' => 'required|string|max:255',
+            'location_detail' => 'nullable|string',
+            'organizer' => 'nullable|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'max_participants' => 'nullable|integer|min:1',
+            'requirements' => 'nullable|string',
+            'is_registration_required' => 'boolean',
+            'is_reminder_active' => 'boolean',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx|max:5120', // 5MB max
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $data = $request->all();
+        $data['created_by'] = Auth::id();
+        $data['is_registration_required'] = $request->has('is_registration_required');
+        $data['is_reminder_active'] = $request->has('is_reminder_active');
+
+        // Handle file upload
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $data['attachment'] = $file->storeAs('calendar_events', $filename, 'public');
+        }
+
+        $event = CalendarEvent::create($data);
+
+        return redirect()->route('kalender.index')
+            ->with('success', 'Kegiatan berhasil ditambahkan!');
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

@@ -16,6 +16,10 @@ class PollController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function adminCreate()
+    {
+        return view('admin.createpolling');
+    }
     public function index()
     {
         $user = Auth::user();
@@ -59,6 +63,67 @@ class PollController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    public function adminStore(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:100',
+            'description' => 'required|string|max:500',
+            'category' => 'required|string|in:umum,keamanan,kebersihan,keuangan,fasilitas,kegiatan,lainnya',
+            'end_date' => 'required|date|after:now',
+            'options' => 'required|array|min:2|max:8',
+            'options.*' => 'required|string|max:100|distinct',
+            'allow_multiple' => 'boolean',
+            'anonymous' => 'boolean',
+            'notify_result' => 'boolean',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $user = Auth::user();
+
+            // Create polling
+            $polling = Poll::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'end_date' => $request->end_date,
+                'allow_multiple' => $request->has('allow_multiple'),
+                'anonymous' => $request->has('anonymous'),
+                'notify_result' => $request->has('notify_result'),
+                'user_id' => $user->id,
+                'rt' => $user->rt,
+                'rw' => $user->rw,
+                'status' => 'active',
+            ]);
+
+            // Create poll options
+            foreach ($request->options as $index => $option) {
+                if (trim($option) !== '') {
+                    PollOption::create([
+                        'poll_id' => $polling->id,
+                        'option_text' => trim($option),
+                        'order' => $index + 1,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('polling.index')
+                ->with('success', 'Polling berhasil dibuat dan dipublikasikan!');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            \Log::error('Error creating poll: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Terjadi kesalahan saat membuat polling. Silakan coba lagi.']);
+        }
+    }
+
     public function store(Request $request)
     {
         $request->validate([

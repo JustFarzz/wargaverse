@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event</title>
 
-    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <link rel="stylesheet" href="{{ asset('css/createkalender.css') }}">
 </head>
 <body>
-    @include('components.navbar')
-
     <div class="kalender-container">
         <!-- Header Section -->
         <div class="page-header">
@@ -30,7 +26,7 @@
     
         <!-- Form Section -->
         <div class="form-container">
-            <form action="{{ route('kalender.store') }}" method="POST" class="event-form" enctype="multipart/form-data">
+            <form action="{{ route('admin.event.store') }}" method="POST" class="event-form" enctype="multipart/form-data">
                 @csrf
                 
                 <div class="form-grid">
@@ -259,7 +255,7 @@
                     </div>
     
                     <!-- File Upload -->
-                    <div class="form-section">
+                    {{-- <div class="form-section">
                         <h3>Lampiran</h3>
                         
                         <div class="form-group">
@@ -280,7 +276,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
     
                 <!-- Form Actions -->

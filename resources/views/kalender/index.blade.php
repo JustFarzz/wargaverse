@@ -5,10 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event</title>
+
+    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <link rel="stylesheet" href="{{ asset('css/indexkalender.css') }}">
 </head>
 
 <body>
+    @include('components.navbar')
+
     <div class="kalender-container">
         <!-- Header Section -->
         <div class="page-header">
@@ -16,12 +22,12 @@
                 <h1>📅 Kalender Kegiatan RT</h1>
                 <p>Jadwal dan agenda kegiatan RT untuk bulan ini</p>
             </div>
-            <div class="header-actions">
+            {{-- <div class="header-actions">
                 <a href="{{ route('kalender.create') }}" class="btn-primary">
                     <i class="icon">➕</i>
                     Tambah Kegiatan
                 </a>
-            </div>
+            </div> --}}
         </div>
 
         <!-- Calendar Navigation -->

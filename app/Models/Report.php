@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Report extends Model
 {
@@ -54,6 +55,25 @@ class Report extends Model
     public function respondedBy()
     {
         return $this->belongsTo(User::class, 'responded_by');
+    }
+
+    /**
+     * Get the image URL.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if ($this->image) {
+            return Storage::disk('public')->url($this->image);
+        }
+        return null;
+    }
+
+    /**
+     * Check if report has image.
+     */
+    public function getHasImageAttribute(): bool
+    {
+        return !empty($this->image) && Storage::disk('public')->exists($this->image);
     }
 
     /**
@@ -188,5 +208,28 @@ class Report extends Model
     public function scopeActive($query)
     {
         return $query->whereNotIn('status', ['completed', 'rejected']);
+    }
+
+    /**
+     * Scope for reports with images
+     */
+    public function scopeWithImages($query)
+    {
+        return $query->whereNotNull('image');
+    }
+
+    /**
+     * Boot method to handle model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Delete image when report is deleted
+        static::deleting(function ($report) {
+            if ($report->image && Storage::disk('public')->exists($report->image)) {
+                Storage::disk('public')->delete($report->image);
+            }
+        });
     }
 }

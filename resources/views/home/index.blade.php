@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
+    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <link href="{{ asset('css/home.css') }}" rel="stylesheet">
 
     <title>Sistem Informasi RT</title>
 </head>
 <body>
+    @include('components.navbar')
+
     <div class="home-container">
         <!-- Header Welcome -->
         <div class="welcome-section">
@@ -70,32 +75,32 @@
                     </div>
                     <div class="card-content">
                         <div class="action-buttons">
-                            {{-- <a href="{{ route('timeline.create') }}" class="action-btn primary">
+                            <a href="{{ route('timeline.create') }}" class="action-btn primary">
                                 <span class="btn-icon">📝</span>
                                 Buat Postingan
-                            </a> --}}
+                            </a>
                             <a href="{{ route('laporan.create') }}" class="action-btn warning">
                                 <span class="btn-icon">📋</span>
                                 Buat Laporan
                             </a>
-                            <a href="{{ route('polling.create') }}" class="action-btn info">
+                            {{-- <a href="{{ route('polling.create') }}" class="action-btn info">
                                 <span class="btn-icon">🗳️</span>
                                 Buat Polling
                             </a>
                             <a href="{{ route('kalender.create') }}" class="action-btn success">
                                 <span class="btn-icon">📅</span>
                                 Tambah Kegiatan
-                            </a>
+                            </a> --}}
                         </div>
                     </div>
                 </div>
     
                 <!-- Recent Posts -->
                 <div class="card recent-posts">
-                    {{-- <div class="card-header">
+                    <div class="card-header">
                         <h2>Postingan Terbaru</h2>
                         <a href="{{ route('timeline.index') }}" class="view-all">Lihat Semua</a>
-                    </div> --}}
+                    </div>
                     <div class="card-content">
                         @if(isset($recentPosts) && $recentPosts->count() > 0)
                             @foreach($recentPosts as $post)

@@ -3,6 +3,7 @@
 @section('title', 'Detail Transaksi Kas')
 
 @section('styles')
+
 <link rel="stylesheet" href="{{ asset('css/kas.css') }}">
 @endsection
 

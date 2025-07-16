@@ -6,6 +6,7 @@ use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
@@ -48,12 +49,26 @@ class ReportController extends Controller
      */
     public function store(Request $request)
     {
+        // Validation
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|in:infrastruktur,kebersihan,keamanan,sosial,lainnya',
+            'priority' => 'required|in:low,medium,high',
+            'description' => 'required|string|max:1000',
+            'location' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+        ]);
+
         $imagePath = null;
 
         // Handle file upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
+
+            // Generate unique filename
+            $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+
+            // Store image
             $imagePath = $image->storeAs('reports', $imageName, 'public');
         }
 
@@ -62,7 +77,7 @@ class ReportController extends Controller
             'user_id' => Auth::id(),
             'title' => $request->title,
             'category' => $request->category,
-            'priority' => $request->priority ?? 'medium',
+            'priority' => $request->priority,
             'description' => $request->description,
             'location' => $request->location,
             'image' => $imagePath,
@@ -121,17 +136,27 @@ class ReportController extends Controller
             return redirect()->route('laporan.show', $report)->with('error', 'Laporan tidak dapat diupdate karena sudah diproses.');
         }
 
+        // Validation
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|in:infrastruktur,kebersihan,keamanan,sosial,lainnya',
+            'priority' => 'required|in:low,medium,high',
+            'description' => 'required|string|max:1000',
+            'location' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+        ]);
+
         $imagePath = $report->image;
 
         // Handle file upload
         if ($request->hasFile('image')) {
             // Delete old image if exists
-            if ($report->image) {
+            if ($report->image && Storage::disk('public')->exists($report->image)) {
                 Storage::disk('public')->delete($report->image);
             }
 
             $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
             $imagePath = $image->storeAs('reports', $imageName, 'public');
         }
 
@@ -139,7 +164,7 @@ class ReportController extends Controller
         $report->update([
             'title' => $request->title,
             'category' => $request->category,
-            'priority' => $request->priority ?? 'medium',
+            'priority' => $request->priority,
             'description' => $request->description,
             'location' => $request->location,
             'image' => $imagePath,
@@ -159,7 +184,7 @@ class ReportController extends Controller
         }
 
         // Delete image if exists
-        if ($report->image) {
+        if ($report->image && Storage::disk('public')->exists($report->image)) {
             Storage::disk('public')->delete($report->image);
         }
 
@@ -178,6 +203,10 @@ class ReportController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengubah status laporan.');
         }
 
+        $request->validate([
+            'status' => 'required|in:pending,in_progress,completed,rejected'
+        ]);
+
         $report->update([
             'status' => $request->status,
         ]);
@@ -194,6 +223,11 @@ class ReportController extends Controller
         if (Auth::user()->role !== 'admin') {
             abort(403, 'Anda tidak memiliki akses untuk menanggapi laporan.');
         }
+
+        $request->validate([
+            'response' => 'required|string|max:1000',
+            'status' => 'nullable|in:pending,in_progress,completed,rejected'
+        ]);
 
         $report->update([
             'response' => $request->response,

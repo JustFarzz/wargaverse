@@ -20,7 +20,8 @@ class AuthController extends Controller
     {
         // Redirect jika sudah login
         if (Auth::check()) {
-            return redirect()->route('home');
+            $user = Auth::user();
+            return $user->role === 'admin' ? redirect()->route('admin.dashboard') : redirect()->route('home');
         }
 
         return view('auth.login');
@@ -33,7 +34,8 @@ class AuthController extends Controller
     {
         // Redirect jika sudah login
         if (Auth::check()) {
-            return redirect()->route('home');
+            $user = Auth::user();
+            return $user->role === 'admin' ? redirect()->route('admin.dashboard') : redirect()->route('home');
         }
 
         return view('auth.register');
@@ -48,21 +50,25 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string|min:6',
+            'login_type' => 'required|in:warga,admin',
         ], [
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'password.required' => 'Password wajib diisi.',
             'password.min' => 'Password minimal 6 karakter.',
+            'login_type.required' => 'Tipe login wajib dipilih.',
+            'login_type.in' => 'Tipe login tidak valid.',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
-                ->withInput($request->only('email'));
+                ->withInput($request->only('email', 'login_type'));
         }
 
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
+        $loginType = $request->input('login_type');
 
         // Cek apakah user ada
         $user = User::where('email', $credentials['email'])->first();
@@ -70,7 +76,27 @@ class AuthController extends Controller
         if (!$user) {
             return redirect()->back()
                 ->withErrors(['email' => 'Email tidak terdaftar.'])
-                ->withInput($request->only('email'));
+                ->withInput($request->only('email', 'login_type'));
+        }
+
+        // Validasi role berdasarkan login type
+        if ($loginType === 'admin' && $user->role !== 'admin') {
+            return redirect()->back()
+                ->withErrors(['email' => 'Akun ini bukan akun admin.'])
+                ->withInput($request->only('email', 'login_type'));
+        }
+
+        if ($loginType === 'warga' && $user->role !== 'warga') {
+            return redirect()->back()
+                ->withErrors(['email' => 'Akun ini bukan akun warga.'])
+                ->withInput($request->only('email', 'login_type'));
+        }
+
+        // Cek status user
+        if ($user->status !== 'active') {
+            return redirect()->back()
+                ->withErrors(['email' => 'Akun Anda sedang tidak aktif. Silakan hubungi admin.'])
+                ->withInput($request->only('email', 'login_type'));
         }
 
         // Attempt login
@@ -84,14 +110,23 @@ class AuthController extends Controller
             ]);
 
             // Flash success message
-            session()->flash('success', 'Selamat datang di WargaVERSE, ' . $user->name . '!');
+            $welcomeMessage = $user->role === 'admin'
+                ? 'Selamat datang Admin, ' . $user->name . '!'
+                : 'Selamat datang di WargaVERSE, ' . $user->name . '!';
 
-            return redirect()->intended(route('home'));
+            session()->flash('success', $welcomeMessage);
+
+            // Redirect berdasarkan role
+            if ($user->role === 'admin') {
+                return redirect()->intended(route('admin.dashboard'));
+            } else {
+                return redirect()->intended(route('home'));
+            }
         }
 
         return redirect()->back()
             ->withErrors(['password' => 'Password yang Anda masukkan salah.'])
-            ->withInput($request->only('email'));
+            ->withInput($request->only('email', 'login_type'));
     }
 
     /**

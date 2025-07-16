@@ -1,13 +1,21 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
 
-@section('title', 'Timeline Warga')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
+    
+    <link rel="stylesheet" href="{{ asset('css/indextimeline.css') }}">
 
-@section('styles')
-<link rel="stylesheet" href="{{ asset('css/timeline/index.css') }}">
-@endsection
+</head>
+<body>
+    @include('components.navbar')
 
-@section('content')
-<div class="timeline-container">
+    <div class="timeline-container">
     <!-- Header Section -->
     <div class="timeline-header">
         <div class="header-content">
@@ -95,28 +103,16 @@
                 </div>
                 @endif
 
-                @if($post->images)
+                @if($post->images->count() > 0)
                 <div class="post-images">
-                    @foreach(json_decode($post->images) as $image)
-                    <img src="{{ asset('storage/' . $image) }}" alt="Post image" class="post-image">
+                    @foreach($post->images as $image)
+                    <img src="{{ $image->url }}" alt="Post image" class="post-image">
                     @endforeach
                 </div>
                 @endif
             </div>
 
             <div class="post-actions">
-                <button class="action-btn like-btn" data-post-id="{{ $post->id }}">
-                    <i class="fas fa-heart"></i>
-                    <span>{{ $post->likes_count ?? 0 }}</span>
-                </button>
-                <button class="action-btn comment-btn">
-                    <i class="fas fa-comment"></i>
-                    <span>{{ $post->comments_count ?? 0 }}</span>
-                </button>
-                <button class="action-btn share-btn">
-                    <i class="fas fa-share"></i>
-                    Bagikan
-                </button>
                 <a href="{{ route('timeline.show', $post->id) }}" class="action-btn view-btn">
                     <i class="fas fa-eye"></i>
                     Lihat Detail
@@ -164,8 +160,5 @@
     </div>
     @endif
 </div>
-@endsection
-
-@section('scripts')
-<script src="{{ asset('js/timeline/index.js') }}"></script>
-@endsection
+</body>
+</html>

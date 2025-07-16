@@ -1,13 +1,21 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
 
-@section('title', $post->title)
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
 
-@section('styles')
-<link rel="stylesheet" href="{{ asset('css/timeline/show.css') }}">
-@endsection
+    <link rel="stylesheet" href="{{ asset('css/showtimeline.css') }}">
 
-@section('content')
-<div class="post-detail-container">
+</head>
+<body>
+    @include('components.navbar')
+    
+    <div class="post-detail-container">
     <!-- Header Section -->
     <div class="detail-header">
         <div class="header-navigation">
@@ -91,14 +99,14 @@
                 {!! nl2br(e($post->content)) !!}
             </div>
 
-            @if($post->images)
+            @if($post->images && $post->images->count() > 0)
             <div class="post-gallery">
                 <div class="gallery-grid">
-                    @foreach(json_decode($post->images) as $index => $image)
+                    @foreach($post->images as $index => $image)
                     <div class="gallery-item" data-index="{{ $index }}">
-                        <img src="{{ asset('storage/' . $image) }}" alt="Post image {{ $index + 1 }}" class="gallery-image">
+                        <img src="{{ $image->url }}" alt="Post image {{ $index + 1 }}" class="gallery-image">
                         <div class="image-overlay">
-                            <button class="view-fullscreen" data-image="{{ asset('storage/' . $image) }}">
+                            <button class="view-fullscreen" data-image="{{ $image->url }}">
                                 <i class="fas fa-expand"></i>
                             </button>
                         </div>
@@ -146,16 +154,16 @@
 
         <!-- Post Actions -->
         <div class="post-actions">
-            <button class="action-btn like-btn {{ $userHasLiked ? 'liked' : '' }}" data-post-id="{{ $post->id }}">
+            {{-- <button class="action-btn like-btn {{ $userHasLiked ? 'liked' : '' }}" data-post-id="{{ $post->id }}">
                 <i class="fas fa-heart"></i>
                 <span class="action-text">Suka</span>
                 <span class="action-count">{{ $post->likes_count ?? 0 }}</span>
-            </button>
-            <button class="action-btn comment-btn" onclick="document.getElementById('commentForm').scrollIntoView()">
+            </button> --}}
+            {{-- <button class="action-btn comment-btn" onclick="document.getElementById('commentForm').scrollIntoView()">
                 <i class="fas fa-comment"></i>
                 <span class="action-text">Komentar</span>
                 <span class="action-count">{{ $comments->count() }}</span>
-            </button>
+            </button> --}}
             <button class="action-btn save-btn" data-post-id="{{ $post->id }}">
                 <i class="fas fa-bookmark"></i>
                 <span class="action-text">Simpan</span>
@@ -164,7 +172,7 @@
     </div>
 
     <!-- Comments Section -->
-    <div class="comments-section">
+    {{-- <div class="comments-section">
         <div class="comments-header">
             <h3 class="comments-title">
                 <i class="fas fa-comments"></i>
@@ -260,10 +268,10 @@
             </div>
             @endforelse
         </div>
-    </div>
+    </div> --}}
 
     <!-- Related Posts -->
-    @if($relatedPosts && $relatedPosts->count() > 0)
+    {{-- @if($relatedPosts && $relatedPosts->count() > 0)
     <div class="related-posts">
         <h3 class="related-title">
             <i class="fas fa-th-large"></i>
@@ -289,7 +297,7 @@
             @endforeach
         </div>
     </div>
-    @endif
+    @endif --}}
 </div>
 
 <!-- Image Lightbox Modal -->
@@ -303,8 +311,5 @@
         </div>
     </div>
 </div>
-@endsection
-
-@section('scripts')
-<script src="{{ asset('js/timeline/show.js') }}"></script>
-@endsection
+</body>
+</html>

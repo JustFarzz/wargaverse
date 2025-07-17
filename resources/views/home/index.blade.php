@@ -24,7 +24,7 @@
                 <span class="current-date">{{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</span>
             </div>
             <div class="weather-widget">
-                <div class="weather-icon">🌤️</div>
+                <div class="weather-icon"></div>
                 <div class="weather-info">
                     <span class="temperature">28°C</span>
                     <span class="condition">Cerah Berawan</span>
@@ -35,28 +35,28 @@
         <!-- Quick Stats -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📝</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3>{{ $totalPosts ?? 0 }}</h3>
                     <p>Postingan Aktif</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📋</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3>{{ $totalReports ?? 0 }}</h3>
                     <p>Laporan Warga</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🗳️</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3>{{ $activePollsCount ?? 0 }}</h3>
                     <p>Polling Aktif</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">💰</div>
+                <div class="stat-icon"></div>
                 <div class="stat-content">
                     <h3>Rp {{ number_format($kasBalance ?? 0, 0, ',', '.') }}</h3>
                     <p>Saldo Kas RT</p>
@@ -76,19 +76,19 @@
                     <div class="card-content">
                         <div class="action-buttons">
                             <a href="{{ route('timeline.create') }}" class="action-btn primary">
-                                <span class="btn-icon">📝</span>
+                                <span class="btn-icon"></span>
                                 Buat Postingan
                             </a>
                             <a href="{{ route('laporan.create') }}" class="action-btn warning">
-                                <span class="btn-icon">📋</span>
+                                <span class="btn-icon"></span>
                                 Buat Laporan
                             </a>
                             {{-- <a href="{{ route('polling.create') }}" class="action-btn info">
-                                <span class="btn-icon">🗳️</span>
+                                <span class="btn-icon"></span>
                                 Buat Polling
                             </a>
                             <a href="{{ route('kalender.create') }}" class="action-btn success">
-                                <span class="btn-icon">📅</span>
+                                <span class="btn-icon"></span>
                                 Tambah Kegiatan
                             </a> --}}
                         </div>
@@ -185,7 +185,7 @@
                             @endforeach
                         @else
                             <div class="empty-state">
-                                <div class="empty-icon">🗳️</div>
+                                <div class="empty-icon"></div>
                                 <p>Tidak ada polling aktif saat ini</p>
                                 <a href="{{ route('polling.create') }}" class="btn btn-primary btn-sm">Buat Polling Baru</a>
                             </div>

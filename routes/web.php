@@ -14,21 +14,6 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ContactController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes - Aplikasi RT
-|--------------------------------------------------------------------------
-|
-| Routes untuk aplikasi manajemen RT yang mencakup:
-| - Timeline (jual beli, jasa)
-| - Laporan warga
-| - Polling warga
-| - Kalender kegiatan RT
-| - Kas/dana RT
-| - Profil warga
-|
-*/
-
 // Redirect root ke beranda
 Route::get('/', function () {
     return redirect()->route('home');
@@ -46,6 +31,12 @@ Route::controller(AuthController::class)->group(function () {
 // Protected Routes - Harus login sebagai warga
 Route::middleware(['auth', 'role:warga'])->group(function () {
 
+    Route::delete('/timeline/{post}', [PostController::class, 'destroy'])->name('timeline.destroy');
+
+    Route::get('/home/stats', [HomeController::class, 'getStats'])->name('home.stats');
+    Route::get('/home/activities', [HomeController::class, 'getRecentActivities'])->name('home.activities');
+    Route::get('/home/dashboard-summary', [HomeController::class, 'getDashboardSummary'])->name('home.dashboard-summary');
+    
     // Beranda/Dashboard Routes
     Route::controller(HomeController::class)->group(function () {
         Route::get('/beranda', 'index')->name('home');
@@ -62,10 +53,9 @@ Route::middleware(['auth', 'role:warga'])->group(function () {
         Route::get('/{post}', 'show')->name('show');
         Route::get('/{post}/edit', 'edit')->name('edit');
         Route::put('/{post}', 'update')->name('update');
-        Route::delete('/{post}', 'destroy')->name('destroy');
     });
 
-    // Laporan Warga Routes
+    // Laporan Warga Routes - PERBAIKAN: Hapus duplikasi, gunakan satu definisi saja
     Route::prefix('laporan')->name('laporan.')->controller(ReportController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/buat', 'create')->name('create');
@@ -76,16 +66,17 @@ Route::middleware(['auth', 'role:warga'])->group(function () {
         Route::delete('/{report}', 'destroy')->name('destroy');
     });
 
+    // Polling Routes
     Route::prefix('polling')->name('polling.')->controller(PollController::class)->group(function () {
-        Route::get('/', 'index')->name('index');           // polling.index
-        Route::get('/buat', 'create')->name('create');     // polling.create  
-        Route::post('/buat', 'store')->name('store');      // polling.store
-        Route::get('/{polling}', 'show')->name('show');    // polling.show
-        Route::post('/{polling}/vote', 'vote')->name('vote'); // polling.vote
-        Route::get('/{polling}/edit', 'edit')->name('edit'); // polling.edit
-        Route::put('/{polling}', 'update')->name('update'); // polling.update
-        Route::delete('/{polling}', 'destroy')->name('destroy'); // polling.destroy
-        Route::get('/{polling}/participants', 'loadMoreParticipants')->name('participants'); // polling.participants
+        Route::get('/', 'index')->name('index');
+        Route::get('/buat', 'create')->name('create');
+        Route::post('/buat', 'store')->name('store');
+        Route::get('/{polling}', 'show')->name('show');
+        Route::post('/{polling}/vote', 'vote')->name('vote');
+        Route::get('/{polling}/edit', 'edit')->name('edit');
+        Route::put('/{polling}', 'update')->name('update');
+        Route::delete('/{polling}', 'destroy')->name('destroy');
+        Route::get('/{polling}/participants', 'loadMoreParticipants')->name('participants');
     });
 
     // Kalender Kegiatan RT Routes
@@ -156,25 +147,27 @@ Route::middleware(['auth', 'role:warga'])->group(function () {
         Route::patch('/notifications/{id}/read', [ProfileController::class, 'markNotificationRead'])->name('notifications.read');
     });
 
-    Route::resource('laporan', ReportController::class);
+    // HAPUS BARIS INI - Route::resource('laporan', ReportController::class);
 });
 
 // Admin Routes - Harus login sebagai admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Dashboard Admin - Mengarah ke views/admin/dashboard.blade.php
+    // Dashboard Admin
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+    // Quick create routes
     Route::get('/create-polling', function () {
         return view('admin.createpolling');
-    })->name('admin.createpolling');
+    })->name('createpolling');
 
     Route::get('/create-event', function () {
         return view('admin.createevent');
-    })->name('admin.createevent');
+    })->name('createevent');
 
     Route::get('/create-kas', function () {
         return view('admin.createkas');
-    })->name('admin.createkas');
+    })->name('createkas');
 
     // User Management
     Route::prefix('warga')->name('warga.')->group(function () {
@@ -195,22 +188,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::patch('/laporan-konten/{report}/proses', [ReportController::class, 'processContentReport'])->name('content-reports.process');
     });
 
-    // Admin Polling Routes - Mengarah ke views/admin/createpolling
+    // Admin Polling Routes
     Route::prefix('polling')->name('polling.')->controller(PollController::class)->group(function () {
-        Route::get('/', 'adminIndex')->name('index');           // admin.polling.index
-        Route::get('/buat', 'adminCreate')->name('create');     // admin.polling.create  
-        Route::post('/buat', 'adminStore')->name('store');      // admin.polling.store
-        Route::get('/{polling}', 'adminShow')->name('show');    // admin.polling.show
-        Route::get('/{polling}/edit', 'adminEdit')->name('edit'); // admin.polling.edit
-        Route::put('/{polling}', 'adminUpdate')->name('update'); // admin.polling.update
-        Route::delete('/{polling}', 'adminDestroy')->name('destroy'); // admin.polling.destroy
+        Route::get('/', 'adminIndex')->name('index');
+        Route::get('/buat', 'adminCreate')->name('create');
+        Route::post('/buat', 'adminStore')->name('store');
+        Route::get('/{polling}', 'adminShow')->name('show');
+        Route::get('/{polling}/edit', 'adminEdit')->name('edit');
+        Route::put('/{polling}', 'adminUpdate')->name('update');
+        Route::delete('/{polling}', 'adminDestroy')->name('destroy');
     });
 
-    // Admin Polling Routes - Mengarah ke views/admin/createevent
+    // Admin Event Routes
     Route::prefix('event')->name('event.')->controller(CalendarController::class)->group(function () {
         Route::get('/', 'adminIndex')->name('index');
-        Route::get('/buat', 'adminCreateevent')->name('create');  // Route untuk create
-        Route::post('/buat', 'adminStore')->name('store');   // Route untuk store
+        Route::get('/buat', 'adminCreateevent')->name('create');
+        Route::post('/buat', 'adminStore')->name('store');
         Route::get('/{event}', 'adminShow')->name('show');
         Route::get('/{event}/edit', 'adminEdit')->name('edit');
         Route::put('/{event}', 'adminUpdate')->name('update');
@@ -219,11 +212,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::patch('/{event}/buka', 'openPoll')->name('open');
     });
 
-    // Admin Polling Routes - Mengarah ke views/admin/createkas
+    // Admin Kas Routes
     Route::prefix('kas')->name('kas.')->controller(FinanceController::class)->group(function () {
         Route::get('/', 'adminIndex')->name('index');
-        Route::get('/buat', 'adminCreatekas')->name('create');  // Route untuk create
-        Route::post('/buat', 'adminStore')->name('store');   // Route untuk store
+        Route::get('/buat', 'adminCreatekas')->name('create');
+        Route::post('/buat', 'adminStore')->name('store');
         Route::get('/{kas}', 'adminShow')->name('show');
         Route::get('/{kas}/edit', 'adminEdit')->name('edit');
         Route::put('/{kas}', 'adminUpdate')->name('update');
@@ -232,57 +225,30 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::patch('/{kas}/buka', 'openPoll')->name('open');
     });
 
-    // Admin routes
-    Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-
-        // Dashboard
-        Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
-
-        // Report Management Routes
-        Route::prefix('reports')->group(function () {
-            // Get report detail for modal (AJAX)
-            Route::get('/{id}', [AdminController::class, 'getReportDetail'])->name('admin.reports.detail');
-
-            // Update report status (AJAX)
-            Route::post('/{id}/update-status', [AdminController::class, 'updateReportStatus'])->name('admin.reports.update-status');
-
-            // Get all reports with filtering
-            Route::get('/', [AdminController::class, 'getReports'])->name('admin.reports.index');
-
-            // Bulk update report status (optional)
-            Route::post('/bulk-update', [AdminController::class, 'bulkUpdateReportStatus'])->name('admin.reports.bulk-update');
-        });
-
-        // Statistics
-        Route::get('/stats', [AdminController::class, 'getStats'])->name('admin.stats');
-
-        // Other admin routes...
-        Route::post('/polls', [AdminController::class, 'createPoll'])->name('admin.polls.create');
-        Route::post('/events', [AdminController::class, 'createEvent'])->name('admin.events.create');
-        Route::post('/transactions', [AdminController::class, 'createTransaction'])->name('admin.transactions.create');
-
-        // Settings
-        Route::get('/settings', [AdminController::class, 'settingsIndex'])->name('admin.settings.index');
-        Route::post('/settings/general', [AdminController::class, 'updateGeneralSettings'])->name('admin.settings.general');
-        Route::post('/settings/notifications', [AdminController::class, 'updateNotificationSettings'])->name('admin.settings.notifications');
+    // Report Management Routes untuk Admin
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/{id}', [AdminController::class, 'getReportDetail'])->name('detail');
+        Route::post('/{id}/update-status', [AdminController::class, 'updateReportStatus'])->name('update-status');
+        Route::get('/', [AdminController::class, 'getReports'])->name('index');
+        Route::post('/bulk-update', [AdminController::class, 'bulkUpdateReportStatus'])->name('bulk-update');
     });
+
+    // Statistics
+    Route::get('/stats', [AdminController::class, 'getStats'])->name('stats');
 
     // Admin specific routes for forms
     Route::prefix('data')->name('data.')->controller(AdminController::class)->group(function () {
-        // Event management
         Route::post('/kegiatan', 'createEvent')->name('event.store');
         Route::get('/kegiatan/{event}', 'showEvent')->name('event.show');
         Route::put('/kegiatan/{event}', 'updateEvent')->name('event.update');
         Route::delete('/kegiatan/{event}', 'deleteEvent')->name('event.destroy');
 
-        // Finance management
         Route::post('/transaksi', 'createTransaction')->name('transaction.store');
         Route::get('/transaksi/{transaction}', 'showTransaction')->name('transaction.show');
         Route::put('/transaksi/{transaction}', 'updateTransaction')->name('transaction.update');
         Route::delete('/transaksi/{transaction}', 'deleteTransaction')->name('transaction.destroy');
         Route::patch('/transaksi/{transaction}/verify', 'verifyTransaction')->name('transaction.verify');
 
-        // Stats and reports
         Route::get('/stats', 'getStats')->name('stats');
         Route::get('/laporan/keuangan', 'getFinanceReport')->name('finance.report');
         Route::get('/laporan/aktivitas', 'getActivityReport')->name('activity.report');
@@ -294,6 +260,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{report}/tanggapi', 'respond')->name('respond');
     });
 
+    // Admin kas verification
     Route::prefix('kas')->name('kas.')->controller(FinanceController::class)->group(function () {
         Route::patch('/{transaction}/verifikasi', 'verify')->name('verify');
         Route::patch('/{transaction}/tolak', 'reject')->name('reject');

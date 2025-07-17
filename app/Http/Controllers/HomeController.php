@@ -8,7 +8,7 @@ use App\Models\Post;
 use App\Models\Report;
 use App\Models\Poll;
 use App\Models\CalendarEvent;
-use App\Models\KasTransaction;
+use App\Models\FinanceTransaction;
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -30,31 +30,24 @@ class HomeController extends Controller
             ->where('rw', $user->rw)
             ->count();
 
-        // Ubah nama variabel untuk menghindari konflik
         $activePollsCount = Poll::where('status', 'active')
             ->where('rt', $user->rt)
             ->where('rw', $user->rw)
             ->where('end_date', '>', now())
             ->count();
 
-        // Saldo kas RT
-        $kasBalance = KasTransaction::where('rt', $user->rt)
-            ->where('rw', $user->rw)
+        // Saldo kas RT - gunakan method yang sama dengan FinanceController
+        $kasBalance = $this->getCurrentBalance($user);
+
+        // PERBAIKAN: Hapus filter user_id untuk kas RT
+        $monthlyIncome = FinanceTransaction::where('type', 'income')
+            ->whereMonth('transaction_date', now()->month)
+            ->whereYear('transaction_date', now()->year)
             ->sum('amount');
 
-        // Pemasukan dan pengeluaran bulan ini
-        $monthlyIncome = KasTransaction::where('rt', $user->rt)
-            ->where('rw', $user->rw)
-            ->where('type', 'income')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->sum('amount');
-
-        $monthlyExpense = KasTransaction::where('rt', $user->rt)
-            ->where('rw', $user->rw)
-            ->where('type', 'expense')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+        $monthlyExpense = FinanceTransaction::where('type', 'expense')
+            ->whereMonth('transaction_date', now()->month)
+            ->whereYear('transaction_date', now()->year)
             ->sum('amount');
 
         // Postingan terbaru
@@ -74,7 +67,7 @@ class HomeController extends Controller
             ->limit(5)
             ->get();
 
-        // Polling aktif - gunakan nama variabel yang berbeda
+        // Polling aktif
         $activePolls = Poll::withCount('votes')
             ->where('status', 'active')
             ->where('rt', $user->rt)
@@ -91,25 +84,32 @@ class HomeController extends Controller
             ->limit(5)
             ->get();
 
-        // Transaksi terakhir
-        $lastTransaction = KasTransaction::where('rt', $user->rt)
-            ->where('rw', $user->rw)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // Transaksi terakhir - untuk kas RT, ambil transaksi terakhir secara umum
+        $lastTransaction = FinanceTransaction::orderBy('created_at', 'desc')->first();
 
         return view('home.index', compact(
             'totalPosts',
             'totalReports',
-            'activePollsCount', // Ubah ini
+            'activePollsCount',
             'kasBalance',
             'monthlyIncome',
             'monthlyExpense',
             'recentPosts',
             'upcomingEvents',
-            'activePolls', // Ini tetap untuk data polling
+            'activePolls',
             'recentReports',
             'lastTransaction'
         ));
+    }
+
+    /**
+     * Get current balance - PERBAIKAN: Sama seperti di FinanceController
+     */
+    private function getCurrentBalance($user)
+    {
+        $totalIncome = FinanceTransaction::where('type', 'income')->sum('amount');
+        $totalExpense = FinanceTransaction::where('type', 'expense')->sum('amount');
+        return $totalIncome - $totalExpense;
     }
 
     /**
@@ -135,9 +135,7 @@ class HomeController extends Controller
                 ->where('end_date', '>', now())
                 ->count(),
 
-            'kasBalance' => KasTransaction::where('rt', $user->rt)
-                ->where('rw', $user->rw)
-                ->sum('amount')
+            'kasBalance' => $this->getCurrentBalance($user)
         ];
 
         return response()->json($stats);
@@ -248,19 +246,16 @@ class HomeController extends Controller
             ],
 
             'financial' => [
-                'income' => KasTransaction::where('rt', $user->rt)
-                    ->where('rw', $user->rw)
-                    ->where('type', 'income')
-                    ->whereBetween('created_at', [$startDate, $endDate])
+                // PERBAIKAN: Hapus filter user_id untuk kas RT
+                'income' => FinanceTransaction::where('type', 'income')
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
                     ->sum('amount'),
-                'expense' => KasTransaction::where('rt', $user->rt)
-                    ->where('rw', $user->rw)
-                    ->where('type', 'expense')
-                    ->whereBetween('created_at', [$startDate, $endDate])
+                'expense' => FinanceTransaction::where('type', 'expense')
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
                     ->sum('amount')
             ],
 
-            'events' => Event::where('rt', $user->rt)
+            'events' => CalendarEvent::where('rt', $user->rt)
                 ->where('rw', $user->rw)
                 ->whereBetween('event_date', [$startDate, $endDate])
                 ->count()

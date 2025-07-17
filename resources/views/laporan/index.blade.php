@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Laporan - WargaVerse</title>
 
     <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -36,63 +36,8 @@
                 <i class="icon-search"></i>
                 <input type="text" placeholder="Cari laporan..." id="searchInput">
             </div>
-            <div class="filter-controls">
-                <select id="statusFilter" class="filter-select">
-                    <option value="">Semua Status</option>
-                    <option value="pending">Menunggu</option>
-                    <option value="progress">Dalam Proses</option>
-                    <option value="resolved">Selesai</option>
-                </select>
-                <select id="categoryFilter" class="filter-select">
-                    <option value="">Semua Kategori</option>
-                    <option value="infrastruktur">Infrastruktur</option>
-                    <option value="kebersihan">Kebersihan</option>
-                    <option value="keamanan">Keamanan</option>
-                    <option value="sosial">Sosial</option>
-                    <option value="lainnya">Lainnya</option>
-                </select>
-            </div>
         </div>
-    
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card pending">
-                <div class="stat-icon">
-                    <i class="icon-clock"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ $pendingCount ?? 0 }}</h3>
-                    <p>Menunggu</p>
-                </div>
-            </div>
-            <div class="stat-card progress">
-                <div class="stat-icon">
-                    <i class="icon-gear"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ $progressCount ?? 0 }}</h3>
-                    <p>Dalam Proses</p>
-                </div>
-            </div>
-            <div class="stat-card resolved">
-                <div class="stat-icon">
-                    <i class="icon-check"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ $resolvedCount ?? 0 }}</h3>
-                    <p>Selesai</p>
-                </div>
-            </div>
-            <div class="stat-card total">
-                <div class="stat-icon">
-                    <i class="icon-list"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ $totalCount ?? 0 }}</h3>
-                    <p>Total Laporan</p>
-                </div>
-            </div>
-        </div>
+
     
         <!-- Reports List -->
         <div class="reports-section">
@@ -102,19 +47,6 @@
                     <div class="report-card" data-status="{{ $report->status }}" data-category="{{ $report->category }}">
                         <div class="report-header">
                             <div class="report-meta">
-                                <span class="status-badge status-{{ $report->status }}">
-                                    @switch($report->status)
-                                        @case('pending')
-                                            <i class="icon-clock"></i> Menunggu
-                                            @break
-                                        @case('progress')
-                                            <i class="icon-gear"></i> Dalam Proses
-                                            @break
-                                        @case('resolved')
-                                            <i class="icon-check"></i> Selesai
-                                            @break
-                                    @endswitch
-                                </span>
                                 <span class="category-badge">{{ ucfirst($report->category) }}</span>
                             </div>
                             <div class="report-date">

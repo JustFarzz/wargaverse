@@ -62,6 +62,14 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug: log request data
+        \Log::info('Post store request:', [
+            'title' => $request->title,
+            'category' => $request->category,
+            'has_images' => $request->hasFile('images'),
+            'images_count' => $request->hasFile('images') ? count($request->file('images')) : 0
+        ]);
+
         // Validate the request
         $request->validate([
             'title' => 'required|string|max:100',
@@ -100,20 +108,32 @@ class PostController extends Controller
             $post->status = 'active';
             $post->save();
 
+            \Log::info('Post created:', ['id' => $post->id]);
+
             // Handle image uploads
             if ($request->hasFile('images')) {
-                $this->handleImageUploads($request->file('images'), $post);
+                $images = $request->file('images');
+                \Log::info('Processing images:', ['count' => count($images)]);
+
+                $this->handleImageUploads($images, $post);
             }
 
             DB::commit();
+
+            \Log::info('Post creation completed successfully');
 
             return redirect()->route('timeline.index')->with('success', 'Posting berhasil dibuat!');
 
         } catch (\Exception $e) {
             DB::rollback();
+            \Log::error('Error creating post:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat membuat posting. Silakan coba lagi.');
+                ->with('error', 'Terjadi kesalahan saat membuat posting. Silakan coba lagi. Error: ' . $e->getMessage());
         }
     }
 
@@ -265,33 +285,61 @@ class PostController extends Controller
     }
 
     /**
-     * Handle image uploads for a post
+     * Handle image uploads for a post - DIPERBAIKI
      */
     private function handleImageUploads($images, Post $post)
     {
-        // Create posts directory if it doesn't exist
-        if (!Storage::exists('posts')) {
-            Storage::makeDirectory('posts');
+        $uploadPath = 'posts';
+
+        // Pastikan direktori ada
+        if (!Storage::disk('public')->exists($uploadPath)) {
+            Storage::disk('public')->makeDirectory($uploadPath);
         }
 
         $order = $post->images()->count();
 
         foreach ($images as $image) {
-            // Generate unique filename
-            $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+            try {
+                if (!$image->isValid()) {
+                    \Log::error('Invalid image file:', ['name' => $image->getClientOriginalName()]);
+                    continue;
+                }
 
-            // Store the image
-            $path = $image->storeAs('posts', $filename, 'public');
+                // Generate unique filename
+                $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
 
-            // Create database record
-            PostImage::create([
-                'post_id' => $post->id,
-                'filename' => $filename,
-                'original_name' => $image->getClientOriginalName(),
-                'mime_type' => $image->getMimeType(),
-                'size' => $image->getSize(),
-                'order' => $order++
-            ]);
+                // Store the image
+                $path = $image->storeAs($uploadPath, $filename, 'public');
+
+                // Verify file was stored
+                if (!Storage::disk('public')->exists($path)) {
+                    throw new \Exception('Failed to store image: ' . $filename);
+                }
+
+                // Create database record
+                $postImage = PostImage::create([
+                    'post_id' => $post->id,
+                    'filename' => $filename,
+                    'original_name' => $image->getClientOriginalName(),
+                    'mime_type' => $image->getMimeType(),
+                    'size' => $image->getSize(),
+                    'order' => $order++
+                ]);
+
+                \Log::info('Image successfully stored:', [
+                    'id' => $postImage->id,
+                    'filename' => $filename,
+                    'path' => $path,
+                    'url' => asset('storage/' . $path)
+                ]);
+
+            } catch (\Exception $e) {
+                \Log::error('Error processing image:', [
+                    'error' => $e->getMessage(),
+                    'file' => $image->getClientOriginalName()
+                ]);
+                throw $e;
+            }
         }
     }
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Kas</title>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="{{ asset('css/createkas.css') }}" rel="stylesheet">
 </head>
 <body>
@@ -177,26 +177,6 @@
                                     <h3>Lampiran & Konfirmasi</h3>
                                     
                                     <div class="form-group">
-                                        {{-- <label for="attachments">Lampiran (Foto/Dokumen)</label>
-                                        <div class="file-upload-area" id="fileUploadArea">
-                                            <div class="upload-placeholder">
-                                                <i class="fas fa-cloud-upload-alt"></i>
-                                                <p>Klik atau drag & drop file ke sini</p>
-                                                <small>Maksimal 5MB per file (JPG, PNG, PDF)</small>
-                                            </div>
-                                            <input type="file" name="attachments[]" id="attachments" 
-                                                   multiple accept=".jpg,.jpeg,.png,.pdf" hidden>
-                                        </div>
-                                        <div class="uploaded-files" id="uploadedFiles"></div>
-                                        @error('attachments')
-                                            <span class="error-message">{{ $message }}</span>
-                                        @enderror
-                                        @error('attachments.*')
-                                            <span class="error-message">{{ $message }}</span>
-                                        @enderror
-                                    </div> --}}
-    
-                                    <div class="form-group">
                                         <label for="notes">Catatan Tambahan</label>
                                         <textarea name="notes" id="notes" class="form-control" rows="3"
                                                   placeholder="Catatan khusus untuk transparansi...">{{ old('notes') }}</textarea>
@@ -231,27 +211,37 @@
                                     </div>
                                 </div>
                             </div>
-    
-                            <!-- Form Navigation -->
-                            <div class="form-navigation">
-                                <button type="button" id="prevBtn" class="btn-secondary" style="display: none;">
-                                    <i class="fas fa-arrow-left"></i>
-                                    Sebelumnya
-                                </button>
-                                
-                                <div class="nav-spacer"></div>
-                                
-                                <button type="button" id="nextBtn" class="btn-primary">
-                                    Selanjutnya
-                                    <i class="fas fa-arrow-right"></i>
-                                </button>
-                                
-                                <button type="submit" id="submitBtn" class="btn-success" style="display: none;">
-                                    <i class="fas fa-save"></i>
-                                    Simpan Transaksi
-                                </button>
-                            </div>
                         </form>
+                    </div>
+                    
+                    <!-- Form Navigation - Dipindahkan ke dalam card -->
+                    <div class="form-navigation">
+                        <div class="nav-left">
+                            <button type="button" id="prevBtn" class="btn-secondary" style="display: none;">
+                                <i class="fas fa-arrow-left"></i>
+                                Sebelumnya
+                            </button>
+                        </div>
+                        
+                        <div class="nav-spacer">
+                            <div class="step-indicator">
+                                <span>Langkah</span>
+                                <span class="current-step" id="currentStepIndicator">1</span>
+                                <span>dari 3</span>
+                            </div>
+                        </div>
+                        
+                        <div class="nav-right">
+                            <button type="button" id="nextBtn" class="btn-primary">
+                                Selanjutnya
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            
+                            <button type="submit" id="submitBtn" class="btn-success" style="display: none;" form="kasForm">
+                                <i class="fas fa-save"></i>
+                                Simpan Transaksi
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -268,10 +258,6 @@
                             <i class="fas fa-check-circle"></i>
                             <p>Berikan judul yang jelas dan mudah dipahami warga</p>
                         </div>
-                        {{-- <div class="tip-item">
-                            <i class="fas fa-check-circle"></i>
-                            <p>Lampirkan foto/nota untuk transparansi</p>
-                        </div> --}}
                         <div class="tip-item">
                             <i class="fas fa-check-circle"></i>
                             <p>Pilih kategori yang sesuai untuk laporan</p>
@@ -334,6 +320,7 @@
         const nextBtn = document.getElementById('nextBtn');
         const prevBtn = document.getElementById('prevBtn');
         const submitBtn = document.getElementById('submitBtn');
+        const currentStepIndicator = document.getElementById('currentStepIndicator');
         
         // Initialize form with old values if they exist
         initializeForm();
@@ -374,6 +361,9 @@
             // Show current step
             document.getElementById('step' + step).classList.add('active');
             document.querySelector('.step:nth-child(' + step + ')').classList.add('active');
+            
+            // Update step indicator
+            currentStepIndicator.textContent = step;
             
             // Update navigation buttons
             prevBtn.style.display = step > 1 ? 'block' : 'none';
@@ -454,77 +444,6 @@
             } else {
                 warningEl.style.display = 'none';
             }
-        }
-        
-        // File upload
-        const fileUploadArea = document.getElementById('fileUploadArea');
-        const fileInput = document.getElementById('attachments');
-        const uploadedFiles = document.getElementById('uploadedFiles');
-        
-        fileUploadArea.addEventListener('click', () => fileInput.click());
-        
-        fileUploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.classList.add('dragover');
-        });
-        
-        fileUploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-        });
-        
-        fileUploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            fileInput.files = files;
-            handleFiles(files);
-        });
-        
-        fileInput.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
-        
-        function handleFiles(files) {
-            uploadedFiles.innerHTML = '';
-            Array.from(files).forEach((file, index) => {
-                // Validate file size (5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert(`File ${file.name} terlalu besar. Maksimal 5MB.`);
-                    return;
-                }
-                
-                // Validate file type
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert(`File ${file.name} tidak diizinkan. Hanya JPG, PNG, dan PDF.`);
-                    return;
-                }
-                
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.innerHTML = `
-                    <i class="fas fa-file"></i>
-                    <span>${file.name}</span>
-                    <button type="button" class="remove-file" onclick="removeFile(${index})">×</button>
-                `;
-                uploadedFiles.appendChild(fileItem);
-            });
-        }
-        
-        // Remove file function
-        window.removeFile = function(index) {
-            const dt = new DataTransfer();
-            const files = fileInput.files;
-            
-            for (let i = 0; i < files.length; i++) {
-                if (i !== index) {
-                    dt.items.add(files[i]);
-                }
-            }
-            
-            fileInput.files = dt.files;
-            handleFiles(fileInput.files);
         }
         
         // Category quick select

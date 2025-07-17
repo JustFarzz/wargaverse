@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
 
     <title>Sistem Informasi RT</title>
 </head>
+
 <body>
     @include('components.navbar')
 
@@ -31,7 +33,7 @@
                 </div>
             </div>
         </div>
-    
+
         <!-- Quick Stats -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -63,7 +65,7 @@
                 </div>
             </div>
         </div>
-    
+
         <!-- Main Content Grid -->
         <div class="main-grid">
             <!-- Left Column -->
@@ -83,18 +85,10 @@
                                 <span class="btn-icon"></span>
                                 Buat Laporan
                             </a>
-                            {{-- <a href="{{ route('polling.create') }}" class="action-btn info">
-                                <span class="btn-icon"></span>
-                                Buat Polling
-                            </a>
-                            <a href="{{ route('kalender.create') }}" class="action-btn success">
-                                <span class="btn-icon"></span>
-                                Tambah Kegiatan
-                            </a> --}}
                         </div>
                     </div>
                 </div>
-    
+
                 <!-- Recent Posts -->
                 <div class="card recent-posts">
                     <div class="card-header">
@@ -104,21 +98,21 @@
                     <div class="card-content">
                         @if(isset($recentPosts) && $recentPosts->count() > 0)
                             @foreach($recentPosts as $post)
-                            <div class="post-item">
-                                <div class="post-avatar">
-                                    <img src="{{ $post->user->avatar ?? asset('images/default-avatar.png') }}" alt="Avatar">
-                                </div>
-                                <div class="post-content">
-                                    <div class="post-header">
-                                        <span class="post-author">{{ $post->user->name }}</span>
-                                        <span class="post-time">{{ $post->created_at->diffForHumans() }}</span>
+                                <div class="post-item">
+                                    <div class="post-avatar">
+                                        <img src="{{ $post->user->avatar ?? asset('images/default-avatar.png') }}" alt="Avatar">
                                     </div>
-                                    <p class="post-excerpt">{{ Str::limit($post->content, 100) }}</p>
-                                    <div class="post-meta">
-                                        <span class="post-category">{{ $post->type ?? 'Umum' }}</span>
+                                    <div class="post-content">
+                                        <div class="post-header">
+                                            <span class="post-author">{{ $post->user->name }}</span>
+                                            <span class="post-time">{{ $post->created_at->diffForHumans() }}</span>
+                                        </div>
+                                        <p class="post-excerpt">{{ Str::limit($post->content, 100) }}</p>
+                                        <div class="post-meta">
+                                            <span class="post-category">{{ $post->type ?? 'Umum' }}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                             @endforeach
                         @else
                             <div class="empty-state">
@@ -128,7 +122,7 @@
                     </div>
                 </div>
             </div>
-    
+
             <!-- Right Column -->
             <div class="right-column">
                 <!-- Upcoming Events -->
@@ -140,17 +134,17 @@
                     <div class="card-content">
                         @if(isset($upcomingEvents) && $upcomingEvents->count() > 0)
                             @foreach($upcomingEvents as $event)
-                            <div class="event-item">
-                                <div class="event-date">
-                                    <span class="day">{{ $event->event_date->format('d') }}</span>
-                                    <span class="month">{{ $event->event_date->format('M') }}</span>
+                                <div class="event-item">
+                                    <div class="event-date">
+                                        <span class="day">{{ $event->event_date->format('d') }}</span>
+                                        <span class="month">{{ $event->event_date->format('M') }}</span>
+                                    </div>
+                                    <div class="event-details">
+                                        <h4>{{ $event->title }}</h4>
+                                        <p>{{ $event->event_date->format('H:i') }} WIB</p>
+                                        <span class="event-location">{{ $event->location }}</span>
+                                    </div>
                                 </div>
-                                <div class="event-details">
-                                    <h4>{{ $event->title }}</h4>
-                                    <p>{{ $event->event_date->format('H:i') }} WIB</p>
-                                    <span class="event-location">{{ $event->location }}</span>
-                                </div>
-                            </div>
                             @endforeach
                         @else
                             <div class="empty-state">
@@ -159,7 +153,7 @@
                         @endif
                     </div>
                 </div>
-    
+
                 <!-- Active Polls -->
                 <div class="card active-polls">
                     <div class="card-header">
@@ -190,9 +184,9 @@
                                 <a href="{{ route('polling.create') }}" class="btn btn-primary btn-sm">Buat Polling Baru</a>
                             </div>
                         @endif
-                    </div>          
+                    </div>
                 </div>
-                
+
                 <!-- Recent Reports Status -->
                 <div class="card recent-reports">
                     <div class="card-header">
@@ -202,15 +196,15 @@
                     <div class="card-content">
                         @if(isset($recentReports) && $recentReports->count() > 0)
                             @foreach($recentReports as $report)
-                            <div class="report-item">
-                                <div class="report-status {{ strtolower($report->status) }}">
-                                    {{ $report->status }}
+                                <div class="report-item">
+                                    <div class="report-status {{ strtolower($report->status) }}">
+                                        {{ $report->status }}
+                                    </div>
+                                    <div class="report-details">
+                                        <h4>{{ Str::limit($report->title, 50) }}</h4>
+                                        <p>{{ $report->created_at->diffForHumans() }}</p>
+                                    </div>
                                 </div>
-                                <div class="report-details">
-                                    <h4>{{ Str::limit($report->title, 50) }}</h4>
-                                    <p>{{ $report->created_at->diffForHumans() }}</p>
-                                </div>
-                            </div>
                             @endforeach
                         @else
                             <div class="empty-state">
@@ -221,7 +215,7 @@
                 </div>
             </div>
         </div>
-    
+
         <!-- Financial Summary (for transparency) -->
         <div class="card financial-summary">
             <div class="card-header">
@@ -236,21 +230,47 @@
                     </div>
                     <div class="finance-item">
                         <div class="finance-label">Pemasukan Bulan Ini</div>
-                        <div class="finance-amount positive">Rp {{ number_format($monthlyIncome ?? 0, 0, ',', '.') }}</div>
+                        <div class="finance-amount positive">Rp {{ number_format($monthlyIncome ?? 0, 0, ',', '.') }}
+                        </div>
                     </div>
                     <div class="finance-item">
                         <div class="finance-label">Pengeluaran Bulan Ini</div>
-                        <div class="finance-amount negative">Rp {{ number_format($monthlyExpense ?? 0, 0, ',', '.') }}</div>
+                        <div class="finance-amount negative">Rp {{ number_format($monthlyExpense ?? 0, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div class="finance-item">
+                        <div class="finance-label">Saldo Bersih Bulan Ini</div>
+                        <div
+                            class="finance-amount {{ ($monthlyIncome - $monthlyExpense) >= 0 ? 'positive' : 'negative' }}">
+                            Rp {{ number_format(($monthlyIncome ?? 0) - ($monthlyExpense ?? 0), 0, ',', '.') }}
+                        </div>
                     </div>
                     <div class="finance-item">
                         <div class="finance-label">Transaksi Terakhir</div>
-                        <div class="finance-date">{{ isset($lastTransaction) ? $lastTransaction->created_at->format('d/m/Y') : '-' }}</div>
+                        <div class="finance-date">
+                            @if(isset($lastTransaction))
+                                {{ $lastTransaction->created_at->format('d/m/Y') }}
+                                <br>
+                                <small>{{ $lastTransaction->title }}</small>
+                            @else
+                                -
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
+    <script>
+        // Pass routes to JavaScript
+        const routes = {
+            stats: '{{ route("home.stats") }}',
+            activities: '{{ route("home.activities") }}',
+            dashboardSummary: '{{ route("home.dashboard-summary") }}'
+        };
+    </script>
     <script src="{{ asset('js/home/index.js') }}"></script>
 </body>
+
 </html>

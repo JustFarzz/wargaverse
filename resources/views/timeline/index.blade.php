@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Timeline - WargaVerse</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
@@ -106,7 +106,10 @@
                 @if($post->images->count() > 0)
                 <div class="post-images">
                     @foreach($post->images as $image)
-                    <img src="{{ $image->url }}" alt="Post image" class="post-image">
+                    <img src="{{ asset('storage/posts/' . $image->filename) }}" 
+                        alt="{{ $image->original_name }}" 
+                        class="post-image"
+                        onerror="this.src='{{ asset('images/default-image.png') }}'; console.log('Image not found: {{ $image->filename }}');">
                     @endforeach
                 </div>
                 @endif

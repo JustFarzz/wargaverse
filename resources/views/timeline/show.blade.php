@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Timeline - WargaVerse</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/navbarcomponents.css') }}">
@@ -25,10 +25,10 @@
             </a>
             <div class="header-actions">
                 @if(auth()->id() === $post->user_id)
-                <a href="{{ route('timeline.edit', $post->id) }}" class="btn-secondary">
+                {{-- <a href="{{ route('timeline.edit', $post->id) }}" class="btn-secondary">
                     <i class="fas fa-edit"></i>
                     Edit
-                </a>
+                </a> --}}
                 <form action="{{ route('timeline.destroy', $post->id) }}" method="POST" class="delete-form" style="display: inline;">
                     @csrf
                     @method('DELETE')
@@ -151,153 +151,7 @@
             </div>
         </div>
         @endif
-
-        <!-- Post Actions -->
-        <div class="post-actions">
-            {{-- <button class="action-btn like-btn {{ $userHasLiked ? 'liked' : '' }}" data-post-id="{{ $post->id }}">
-                <i class="fas fa-heart"></i>
-                <span class="action-text">Suka</span>
-                <span class="action-count">{{ $post->likes_count ?? 0 }}</span>
-            </button> --}}
-            {{-- <button class="action-btn comment-btn" onclick="document.getElementById('commentForm').scrollIntoView()">
-                <i class="fas fa-comment"></i>
-                <span class="action-text">Komentar</span>
-                <span class="action-count">{{ $comments->count() }}</span>
-            </button> --}}
-            <button class="action-btn save-btn" data-post-id="{{ $post->id }}">
-                <i class="fas fa-bookmark"></i>
-                <span class="action-text">Simpan</span>
-            </button>
-        </div>
     </div>
-
-    <!-- Comments Section -->
-    {{-- <div class="comments-section">
-        <div class="comments-header">
-            <h3 class="comments-title">
-                <i class="fas fa-comments"></i>
-                Komentar ({{ $comments->count() }})
-            </h3>
-        </div>
-
-        <!-- Comment Form -->
-        @auth
-        <div class="comment-form-container">
-            <form action="{{ route('comments.store', $post->id) }}" method="POST" id="commentForm">
-                @csrf
-                <div class="comment-input-group">
-                    <div class="commenter-avatar">
-                        <img src="{{ auth()->user()->avatar ?? asset('images/default-avatar.png') }}" 
-                             alt="{{ auth()->user()->name }}">
-                    </div>
-                    <div class="comment-input-wrapper">
-                        <textarea name="content" 
-                                  placeholder="Tulis komentar Anda..." 
-                                  class="comment-input" 
-                                  rows="3" 
-                                  required></textarea>
-                        <div class="comment-actions">
-                            <button type="submit" class="btn-primary">
-                                <i class="fas fa-paper-plane"></i>
-                                Kirim Komentar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-        @else
-        <div class="login-prompt">
-            <p>
-                <a href="{{ route('login') }}">Login</a> untuk memberikan komentar
-            </p>
-        </div>
-        @endauth
-
-        <!-- Comments List -->
-        <div class="comments-list">
-            @forelse($comments as $comment)
-            <div class="comment-item">
-                <div class="comment-avatar">
-                    <img src="{{ $comment->user->avatar ?? asset('images/default-avatar.png') }}" 
-                         alt="{{ $comment->user->name }}">
-                </div>
-                <div class="comment-content">
-                    <div class="comment-header">
-                        <h4 class="commenter-name">{{ $comment->user->name }}</h4>
-                        <span class="comment-time">{{ $comment->created_at->diffForHumans() }}</span>
-                        @if(auth()->id() === $comment->user_id)
-                        <div class="comment-actions-dropdown">
-                            <button class="comment-menu-btn">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="comment-dropdown-menu">
-                                <button class="edit-comment-btn" data-comment-id="{{ $comment->id }}">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                                <form action="{{ route('comments.destroy', $comment->id) }}" method="POST" style="display: inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="delete-comment-btn" onclick="return confirm('Hapus komentar ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-                    <p class="comment-text">{{ $comment->content }}</p>
-                    <div class="comment-reactions">
-                        <button class="reaction-btn like-comment-btn" data-comment-id="{{ $comment->id }}">
-                            <i class="fas fa-thumbs-up"></i>
-                            <span>{{ $comment->likes_count ?? 0 }}</span>
-                        </button>
-                        <button class="reaction-btn reply-btn" data-comment-id="{{ $comment->id }}">
-                            <i class="fas fa-reply"></i>
-                            Balas
-                        </button>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <div class="no-comments">
-                <div class="no-comments-icon">
-                    <i class="fas fa-comment-slash"></i>
-                </div>
-                <p>Belum ada komentar. Jadilah yang pertama berkomentar!</p>
-            </div>
-            @endforelse
-        </div>
-    </div> --}}
-
-    <!-- Related Posts -->
-    {{-- @if($relatedPosts && $relatedPosts->count() > 0)
-    <div class="related-posts">
-        <h3 class="related-title">
-            <i class="fas fa-th-large"></i>
-            Posting Serupa
-        </h3>
-        <div class="related-grid">
-            @foreach($relatedPosts as $relatedPost)
-            <a href="{{ route('timeline.show', $relatedPost->id) }}" class="related-card">
-                @if($relatedPost->images)
-                <div class="related-image">
-                    <img src="{{ asset('storage/' . json_decode($relatedPost->images)[0]) }}" 
-                         alt="{{ $relatedPost->title }}">
-                </div>
-                @endif
-                <div class="related-content">
-                    <h4 class="related-post-title">{{ Str::limit($relatedPost->title, 60) }}</h4>
-                    <div class="related-meta">
-                        <span class="related-author">{{ $relatedPost->user->name }}</span>
-                        <span class="related-date">{{ $relatedPost->created_at->diffForHumans() }}</span>
-                    </div>
-                </div>
-            </a>
-            @endforeach
-        </div>
-    </div>
-    @endif --}}
 </div>
 
 <!-- Image Lightbox Modal -->

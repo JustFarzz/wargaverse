@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - WargaVERSE</title>
     <link href="{{ asset('css/auth.css') }}" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -15,11 +15,11 @@
             <!-- Header -->
             <div class="auth-header">
                 <div class="logo">
-                    <i class="fas fa-home"></i>
+                    <i class="fas fa-leaf"></i>
                     <span>WargaVERSE</span>
                 </div>
                 <h2>Selamat Datang</h2>
-                <p>Masuk ke komunitas digital RT/RW Anda</p>
+                <p>Bergabunglah dengan komunitas hijau digital RT/RW Anda</p>
             </div>
 
             <!-- Login Type Selector -->
@@ -45,7 +45,7 @@
                 <div class="form-group">
                     <div class="input-wrapper">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required>
+                        <input type="email" name="email" placeholder="Alamat Email" value="{{ old('email') }}" required>
                     </div>
                     @error('email')
                         <span class="error-message">{{ $message }}</span>
@@ -56,7 +56,7 @@
                 <div class="form-group">
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
-                        <input type="password" name="password" placeholder="Password" required>
+                        <input type="password" name="password" placeholder="Kata Sandi" required>
                         <button type="button" class="toggle-password">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -73,12 +73,12 @@
                         <span class="checkmark"></span>
                         Ingat saya
                     </label>
-                    <a href="#" class="forgot-link">Lupa password?</a>
+                    <a href="#" class="forgot-link">Lupa kata sandi?</a>
                 </div>
 
                 <!-- General Error Message -->
                 @error('general')
-                    <div class="error-message" style="text-align: center; margin-bottom: 15px;">
+                    <div class="error-message" style="text-align: center; margin-bottom: 18px;">
                         {{ $message }}
                     </div>
                 @enderror
@@ -86,16 +86,16 @@
                 <!-- Submit Button -->
                 <button type="submit" class="auth-btn">
                     <i class="fas fa-sign-in-alt"></i>
-                    <span class="btn-text">Masuk</span>
+                    <span class="btn-text">Masuk ke Komunitas</span>
                 </button>
             </form>
 
             <!-- Footer -->
             <div class="auth-footer">
-                <p class="register-text">Belum punya akun? <a href="{{ route('register') }}">Daftar sekarang</a></p>
+                <p class="register-text">Belum bergabung? <a href="{{ route('register') }}">Daftar sekarang</a></p>
                 <p class="admin-info" style="display: none;">
-                    <i class="fas fa-info-circle"></i>
-                    Login khusus untuk Admin RT/RW
+                    <i class="fas fa-shield-alt"></i>
+                    Portal khusus Admin RT/RW
                 </p>
             </div>
         </div>
@@ -105,10 +105,12 @@
             <div class="circle circle-1"></div>
             <div class="circle circle-2"></div>
             <div class="circle circle-3"></div>
+            <div class="circle circle-4"></div>
+            <div class="circle circle-5"></div>
         </div>
     </div>
 
     <script src="{{ asset('js/auth/login.js') }}"></script>
 </body>
 
-</html> 
+</html>

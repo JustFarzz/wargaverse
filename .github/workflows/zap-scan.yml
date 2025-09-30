@@ -1,0 +1,54 @@
+name: OWASP ZAP Scan
+
+on:
+  workflow_dispatch: # bisa dijalankan manual
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup PHP & dependencies
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      # Step 3: Setup Laravel
+      - name: Prepare Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force --database=sqlite
+          php artisan serve --host=0.0.0.0 --port=8000 &
+
+      - name: Wait for Laravel to start
+        run: sleep 15
+
+      # Step 4: Jalankan ZAP Baseline Scan
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.8.0
+        with:
+          target: 'http://localhost:8000'
+          cmd_options: '-a'
+          report_file_name: 'zap_report.html'
+
+      # Step 5: Upload hasil scan sebagai artifact
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: ZAP-Report
+          path: zap_report.html
